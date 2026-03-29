@@ -8,8 +8,15 @@ import { forecastRoute } from "./routes/forecast.js";
 import { historicalRoute } from "./routes/historical.js";
 import { locationsRoute } from "./routes/locations.js";
 import { recommendRoute } from "./routes/recommend.js";
+import { kouyouStatusRoute } from "./routes/kouyou/status.js";
+import { kouyouForecastRoute } from "./routes/kouyou/forecast.js";
+import { kouyouHistoricalRoute } from "./routes/kouyou/historical.js";
+import { kouyouLocationsRoute } from "./routes/kouyou/locations.js";
+import { kouyouRecommendRoute } from "./routes/kouyou/recommend.js";
 import { handleScheduled } from "./cron/ingest.js";
 import { adminRoute } from "./routes/admin.js";
+import { matsuriRoute } from "./routes/matsuri.js";
+import { mcpHandler } from "./mcp/server.js";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -41,7 +48,18 @@ v1.route("/sakura/historical", historicalRoute);
 v1.route("/sakura/locations", locationsRoute);
 v1.route("/sakura/recommend", recommendRoute);
 
+v1.route("/kouyou/status", kouyouStatusRoute);
+v1.route("/kouyou/forecast", kouyouForecastRoute);
+v1.route("/kouyou/historical", kouyouHistoricalRoute);
+v1.route("/kouyou/locations", kouyouLocationsRoute);
+v1.route("/kouyou/recommend", kouyouRecommendRoute);
+v1.route("/matsuri", matsuriRoute);
+
 app.route("/v1", v1);
+
+// ── MCP endpoint (no auth, rate limited) ──
+app.all("/mcp", mcpHandler as never);
+app.all("/mcp/*", mcpHandler as never);
 
 // ── 404 handler ──
 app.notFound((c) =>

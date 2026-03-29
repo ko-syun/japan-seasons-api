@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS matsuri (
+  id TEXT PRIMARY KEY,
+  name_en TEXT NOT NULL,
+  name_ja TEXT NOT NULL,
+  city TEXT NOT NULL,
+  prefecture TEXT NOT NULL,
+  region TEXT NOT NULL,
+  month INTEGER NOT NULL,
+  date_start TEXT,
+  date_end TEXT,
+  highlight_dates TEXT,
+  category TEXT NOT NULL,
+  description_en TEXT,
+  description_ja TEXT,
+  estimated_visitors INTEGER,
+  access TEXT,
+  latitude REAL,
+  longitude REAL,
+  tips_en TEXT,
+  official_url TEXT,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  updated_at TEXT NOT NULL
+);

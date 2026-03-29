@@ -14,8 +14,9 @@
     "db:seed": "wrangler d1 execute japan-seasons-db --local --file=src/db/seed.sql"
   },
   "dependencies": {
-    "hono": "^4.7.0",
-    "cheerio": "^1.0.0"
+    "@modelcontextprotocol/sdk": "^1.28.0",
+    "cheerio": "^1.0.0",
+    "hono": "^4.7.0"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.8.0",

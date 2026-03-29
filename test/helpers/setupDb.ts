@@ -7,6 +7,8 @@ export async function createTables(DB: D1Database): Promise<void> {
 
   await DB.exec("CREATE TABLE IF NOT EXISTS sakura_observations (id INTEGER PRIMARY KEY AUTOINCREMENT, location_id TEXT NOT NULL, year INTEGER NOT NULL, bloom_date TEXT, full_bloom_date TEXT, bloom_status TEXT DEFAULT 'not_yet', normal_bloom_date TEXT, normal_full_bloom_date TEXT, diff_from_normal INTEGER, tree_species TEXT DEFAULT 'somei_yoshino', source TEXT NOT NULL DEFAULT 'jma', updated_at TEXT NOT NULL, UNIQUE(location_id, year, source))");
 
+  await DB.exec("CREATE TABLE IF NOT EXISTS kouyou_observations (id INTEGER PRIMARY KEY AUTOINCREMENT, location_id TEXT NOT NULL, year INTEGER NOT NULL, color_date TEXT, fall_date TEXT, color_status TEXT DEFAULT 'not_yet', normal_color_date TEXT, normal_fall_date TEXT, diff_from_normal INTEGER, tree_species TEXT DEFAULT 'iroha_kaede', source TEXT NOT NULL DEFAULT 'jma', updated_at TEXT NOT NULL, UNIQUE(location_id, year, source))");
+
   await DB.exec("CREATE TABLE IF NOT EXISTS api_keys (key_hash TEXT PRIMARY KEY, tier TEXT NOT NULL DEFAULT 'free', owner_email TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, last_used_at TEXT, is_active INTEGER NOT NULL DEFAULT 1)");
 }
 

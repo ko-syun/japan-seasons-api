@@ -38,6 +38,24 @@ CREATE TABLE IF NOT EXISTS api_keys (
   is_active INTEGER NOT NULL DEFAULT 1
 );
 
+-- Phase 2: Kouyou (Autumn Foliage) observations
+
+CREATE TABLE IF NOT EXISTS kouyou_observations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  location_id TEXT NOT NULL REFERENCES locations(id),
+  year INTEGER NOT NULL,
+  color_date TEXT,
+  fall_date TEXT,
+  color_status TEXT DEFAULT 'not_yet',
+  normal_color_date TEXT,
+  normal_fall_date TEXT,
+  diff_from_normal INTEGER,
+  tree_species TEXT DEFAULT 'iroha_kaede',
+  source TEXT NOT NULL DEFAULT 'jma',
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(location_id, year, source)
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_sakura_location_year
   ON sakura_observations(location_id, year);
@@ -50,3 +68,12 @@ CREATE INDEX IF NOT EXISTS idx_sakura_year
 
 CREATE INDEX IF NOT EXISTS idx_locations_region
   ON locations(region);
+
+CREATE INDEX IF NOT EXISTS idx_kouyou_location_year
+  ON kouyou_observations(location_id, year);
+
+CREATE INDEX IF NOT EXISTS idx_kouyou_year_status
+  ON kouyou_observations(year, color_status);
+
+CREATE INDEX IF NOT EXISTS idx_kouyou_year
+  ON kouyou_observations(year);

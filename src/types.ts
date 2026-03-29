@@ -238,6 +238,146 @@ export interface ParsedBloomData {
   full_bloom_date: string | null;
 }
 
+// ── Kouyou (Autumn Foliage) Types ──
+
+export type ColorStatus =
+  | "not_yet"
+  | "coloring"
+  | "peak_color"
+  | "falling"
+  | "fallen";
+
+export interface KouyouObservation {
+  id: number;
+  location_id: string;
+  year: number;
+  color_date: string | null;
+  fall_date: string | null;
+  color_status: ColorStatus | null;
+  normal_color_date: string | null;
+  normal_fall_date: string | null;
+  diff_from_normal: number | null;
+  tree_species: string;
+  source: string;
+  updated_at: string;
+}
+
+export interface KouyouStatusSummary {
+  total_stations: number;
+  colored: number;
+  peak_color: number;
+  not_yet: number;
+  fallen: number;
+}
+
+export interface KouyouStationStatus {
+  location: LocationRef;
+  status: ColorStatus;
+  color_date: string | null;
+  fall_date: string | null;
+  normal_color_date: string | null;
+  diff_from_normal_days: number | null;
+  tree_species: string;
+}
+
+export interface KouyouStatusResponse {
+  data: {
+    season: number;
+    summary: KouyouStatusSummary;
+    stations: KouyouStationStatus[];
+  };
+  meta: {
+    source: string;
+    updated_at: string;
+    attribution: string;
+  };
+}
+
+export interface KouyouForecastLocation {
+  location: LocationRef;
+  estimated_color_window: DateWindow;
+  estimated_fall_window: DateWindow;
+  actual: {
+    color_date: string | null;
+    fall_date: string | null;
+    status: ColorStatus;
+  };
+  based_on_years: number;
+  tree_species: string;
+}
+
+export interface KouyouForecastResponse {
+  data: {
+    season: number;
+    note: string;
+    locations: KouyouForecastLocation[];
+  };
+  meta: {
+    source: string;
+    method: string;
+    attribution: string;
+  };
+}
+
+export interface KouyouHistoricalRecord {
+  year: number;
+  color_date: string | null;
+  fall_date: string | null;
+  diff_from_normal_days: number | null;
+  tree_species: string;
+}
+
+export interface KouyouHistoricalStatistics {
+  years_observed: number;
+  earliest_color: { date: string; year: number } | null;
+  latest_color: { date: string; year: number } | null;
+  average_color: string | null;
+  trend: string;
+}
+
+export interface KouyouHistoricalResponse {
+  data: {
+    location: LocationRef;
+    records: KouyouHistoricalRecord[];
+    statistics: KouyouHistoricalStatistics;
+  };
+  meta: {
+    source: string;
+    attribution: string;
+  };
+}
+
+export interface KouyouRecommendResponse {
+  data: {
+    query: {
+      city: string | null;
+      region: string | null;
+      dates: string | null;
+    };
+    recommendation: {
+      likelihood: "high" | "medium" | "low";
+      confidence: number;
+      summary: string;
+      best_days: {
+        estimated_peak_color_period: string;
+        overlap_with_travel: string | null;
+      };
+      alternatives: KouyouRecommendAlternative[];
+    };
+  };
+  meta: {
+    method: string;
+    disclaimer: string;
+  };
+}
+
+export interface KouyouRecommendAlternative {
+  city: string;
+  name: string;
+  note: string;
+  estimated_peak_color_period: string;
+}
+
 // ── Error ──
 
 export interface ApiError {

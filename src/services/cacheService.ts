@@ -6,6 +6,12 @@ const CACHE_KEYS = {
   locations: "cache:sakura:locations",
 } as const;
 
+const KOUYOU_CACHE_KEYS = {
+  status: "cache:kouyou:status",
+  forecast: "cache:kouyou:forecast",
+  locations: "cache:kouyou:locations",
+} as const;
+
 const TTL = {
   status: 21600,    // 6 hours
   forecast: 3600,   // 1 hour
@@ -41,4 +47,4 @@ export async function invalidateCache(
   await Promise.all(keys.map((k) => kv.delete(k)));
 }
 
-export { CACHE_KEYS, TTL };
+export { CACHE_KEYS, KOUYOU_CACHE_KEYS, TTL };
