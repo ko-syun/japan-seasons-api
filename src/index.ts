@@ -9,11 +9,15 @@ import { historicalRoute } from "./routes/historical.js";
 import { locationsRoute } from "./routes/locations.js";
 import { recommendRoute } from "./routes/recommend.js";
 import { handleScheduled } from "./cron/ingest.js";
+import { adminRoute } from "./routes/admin.js";
 
 const app = new Hono<{ Bindings: Env }>();
 
 // ── Global middleware ──
 app.use("*", corsMiddleware);
+
+// ── Admin (temporary, remove after data import) ──
+app.route("/admin", adminRoute);
 
 // ── Health check (no auth) ──
 app.get("/", (c) =>
