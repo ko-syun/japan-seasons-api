@@ -26,6 +26,11 @@
   - Round 1: 🔴3件 🟡11件 🟢6件 → 全critical/warning修正
   - Round 2: LGTM ✅
 - [PM] GitHub push完了: <https://github.com/ko-syun/japan-seasons-api>
+- [PM] Phase 2 紅葉API完了: 5エンドポイント + 53地点 + 11テスト
+- [PM] Phase 3 祭りAPI完了: 3エンドポイント + 50祭り + 14テスト
+- [PM] Phase 4 MCPサーバー完了: 10ツール + Streamable HTTP
+- [PM] Phase 5 Dashboard+Stripe完了: 認証 + APIキー管理 + 課金 + 17テスト
+- [PM] 全Phase デプロイ完了: 66テスト全通過
 - [制約] Cloudflare Workers CPU time: 10ms (free) / 50ms (paid) — historical importはバッチ分割必須
 - [制約] D1 batch insert: 最大100行/バッチ
 - [制約] JMAスクレイピング: robots.txtに明示的禁止なし（DATA-SOURCES.md確認済み）、ただし礼儀として間隔を置く
