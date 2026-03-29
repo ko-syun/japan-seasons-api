@@ -1,0 +1,35 @@
+name = "japan-seasons-api"
+main = "src/index.ts"
+compatibility_date = "2025-03-28"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "japan-seasons-db"
+database_id = "placeholder-replace-after-create"
+
+# KV Namespace for caching
+[[kv_namespaces]]
+binding = "KV"
+id = "placeholder-replace-after-create"
+
+# Cron Triggers - daily during sakura season
+[triggers]
+crons = ["0 1 * * *"]
+
+# Environment variables
+[vars]
+ENVIRONMENT = "production"
+
+# Staging environment
+[env.staging]
+name = "japan-seasons-api-staging"
+[env.staging.vars]
+ENVIRONMENT = "staging"
+
+# Local development
+[env.dev]
+name = "japan-seasons-api-dev"
+[env.dev.vars]
+ENVIRONMENT = "development"

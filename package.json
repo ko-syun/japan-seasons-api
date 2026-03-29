@@ -1,0 +1,27 @@
+{
+  "name": "japan-seasons-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production",
+    "db:migrate": "wrangler d1 execute japan-seasons-db --local --file=src/db/schema.sql",
+    "db:seed": "wrangler d1 execute japan-seasons-db --local --file=src/db/seed.sql"
+  },
+  "dependencies": {
+    "hono": "^4.7.0",
+    "cheerio": "^1.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.8.0",
+    "@cloudflare/workers-types": "^4.20250327.0",
+    "typescript": "^5.8.0",
+    "vitest": "~3.0.0",
+    "wrangler": "^4.0.0"
+  }
+}
