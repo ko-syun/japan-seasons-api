@@ -4,6 +4,9 @@ export interface Env {
   DB: D1Database;
   KV: KVNamespace;
   ENVIRONMENT: string;
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
+  JWT_SECRET?: string;
 }
 
 // ── Location Types ──

@@ -17,6 +17,8 @@ import { handleScheduled } from "./cron/ingest.js";
 import { adminRoute } from "./routes/admin.js";
 import { matsuriRoute } from "./routes/matsuri.js";
 import { mcpHandler } from "./mcp/server.js";
+import { dashboardRoute } from "./routes/dashboard.js";
+import { dashboardHtml } from "./dashboard/static/index.js";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -56,6 +58,11 @@ v1.route("/kouyou/recommend", kouyouRecommendRoute);
 v1.route("/matsuri", matsuriRoute);
 
 app.route("/v1", v1);
+
+// ── Dashboard ──
+app.get("/dashboard", (c) => c.html(dashboardHtml));
+app.get("/dashboard/", (c) => c.html(dashboardHtml));
+app.route("/dashboard", dashboardRoute);
 
 // ── MCP endpoint (no auth, rate limited) ──
 app.all("/mcp", mcpHandler as never);

@@ -49,5 +49,8 @@ describe("Rate Limiting", () => {
     const body = await res.json() as Record<string, unknown>;
     const error = body.error as Record<string, unknown>;
     expect(error.code).toBe("RATE_LIMIT_EXCEEDED");
+
+    // Immediately clean up to prevent polluting other test suites
+    await env.KV.delete(kvKey);
   });
 });

@@ -21,6 +21,10 @@ crons = ["0 1 * * *"]
 # Environment variables
 [vars]
 ENVIRONMENT = "production"
+# Set these via `wrangler secret put`:
+# STRIPE_SECRET_KEY
+# STRIPE_WEBHOOK_SECRET
+# JWT_SECRET
 
 # Staging environment
 [env.staging]
