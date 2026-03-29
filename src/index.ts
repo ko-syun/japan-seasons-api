@@ -19,6 +19,7 @@ import { matsuriRoute } from "./routes/matsuri.js";
 import { mcpHandler } from "./mcp/server.js";
 import { dashboardRoute } from "./routes/dashboard.js";
 import { dashboardHtml } from "./dashboard/static/index.js";
+import { landingHtml } from "./landing/index.js";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -28,14 +29,8 @@ app.use("*", corsMiddleware);
 // ── Admin (temporary, remove after data import) ──
 app.route("/admin", adminRoute);
 
-// ── Health check (no auth) ──
-app.get("/", (c) =>
-  c.json({
-    name: "Japan Seasons API",
-    version: "0.1.0",
-    docs: "https://japanseasons.com/docs",
-  })
-);
+// ── Landing page ──
+app.get("/", (c) => c.html(landingHtml));
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 
