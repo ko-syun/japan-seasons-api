@@ -20,17 +20,41 @@ import { mcpHandler } from "./mcp/server.js";
 import { dashboardRoute } from "./routes/dashboard.js";
 import { dashboardHtml } from "./dashboard/static/index.js";
 import { landingHtml } from "./landing/index.js";
+import {
+  robotsTxt,
+  sitemapXml,
+  llmsTxt,
+  llmsFullTxt,
+  jsonLd,
+  aiPluginJson,
+} from "./seo/static.js";
 
 const app = new Hono<{ Bindings: Env }>();
 
 // ── Global middleware ──
 app.use("*", corsMiddleware);
 
+// ── SEO & AI discovery ──
+app.get("/robots.txt", (c) => c.text(robotsTxt));
+app.get("/sitemap.xml", (c) => {
+  c.header("Content-Type", "application/xml");
+  return c.body(sitemapXml);
+});
+app.get("/llms.txt", (c) => c.text(llmsTxt));
+app.get("/llms-full.txt", (c) => c.text(llmsFullTxt));
+app.get("/.well-known/ai-plugin.json", (c) => c.json(JSON.parse(aiPluginJson)));
+
 // ── Admin (temporary, remove after data import) ──
 app.route("/admin", adminRoute);
 
-// ── Landing page ──
-app.get("/", (c) => c.html(landingHtml));
+// ── Landing page (inject JSON-LD) ──
+app.get("/", (c) => {
+  const html = landingHtml.replace(
+    "</head>",
+    `<link rel="canonical" href="https://jpseasons.dokos.dev/" />\n<script type="application/ld+json">${jsonLd}</script>\n</head>`
+  );
+  return c.html(html);
+});
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 
