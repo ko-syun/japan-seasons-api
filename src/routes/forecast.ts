@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { Env, ForecastResponse } from "../types.js";
 import { getForecastData } from "../services/sakuraService.js";
 import { getCached, setCache, CACHE_KEYS, TTL } from "../services/cacheService.js";
+import { safeWaitUntil } from "../utils/waitUntil.js";
 
 const forecastRoute = new Hono<{ Bindings: Env }>();
 
@@ -34,9 +35,7 @@ forecastRoute.get("/", async (c) => {
   };
 
   if (cacheKey) {
-    c.executionCtx.waitUntil(
-      setCache(c.env.KV, cacheKey, response, TTL.forecast)
-    );
+    safeWaitUntil(c, setCache(c.env.KV, cacheKey, response, TTL.forecast));
   }
 
   return c.json(response);

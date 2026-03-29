@@ -1,5 +1,6 @@
 import { Context, Next } from "hono";
 import type { Env } from "../types.js";
+import { safeWaitUntil } from "../utils/waitUntil.js";
 
 interface AuthContext {
   Bindings: Env;
@@ -61,13 +62,10 @@ export async function authMiddleware(
   }
 
   // Update last_used_at (fire-and-forget)
-  c.executionCtx.waitUntil(
-    db
-      .prepare(
-        "UPDATE api_keys SET last_used_at = datetime('now') WHERE key_hash = ?"
-      )
-      .bind(keyHash)
-      .run()
+  safeWaitUntil(
+    c as unknown as Context,
+    db.prepare("UPDATE api_keys SET last_used_at = datetime('now') WHERE key_hash = ?")
+      .bind(keyHash).run()
   );
 
   c.set("apiKeyTier", row.tier);

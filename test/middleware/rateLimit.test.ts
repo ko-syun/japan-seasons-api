@@ -1,51 +1,26 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { env } from "cloudflare:test";
 import app from "../../src/index.js";
-
-async function hashKey(key: string): Promise<string> {
-  const data = new TextEncoder().encode(key);
-  const hash = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(hash))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
+import { createTables, seedApiKey, hashKey } from "../helpers/setupDb.js";
 
 async function setupDb() {
-  await env.DB.exec(`
-    CREATE TABLE IF NOT EXISTS locations (
-      id TEXT PRIMARY KEY, name_en TEXT, name_ja TEXT,
-      prefecture_en TEXT, prefecture_ja TEXT, region TEXT,
-      latitude REAL, longitude REAL, tree_species TEXT DEFAULT 'somei_yoshino'
-    );
-    CREATE TABLE IF NOT EXISTS sakura_observations (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      location_id TEXT, year INTEGER,
-      bloom_date TEXT, full_bloom_date TEXT,
-      bloom_status TEXT DEFAULT 'not_yet',
-      normal_bloom_date TEXT, normal_full_bloom_date TEXT,
-      diff_from_normal INTEGER,
-      tree_species TEXT DEFAULT 'somei_yoshino',
-      source TEXT DEFAULT 'jma',
-      updated_at TEXT DEFAULT (datetime('now')),
-      UNIQUE(location_id, year, source)
-    );
-    CREATE TABLE IF NOT EXISTS api_keys (
-      key_hash TEXT PRIMARY KEY, tier TEXT DEFAULT 'free',
-      owner_email TEXT, created_at TEXT DEFAULT (datetime('now')),
-      last_used_at TEXT, is_active INTEGER DEFAULT 1
-    );
-  `);
-
-  const keyHash = await hashKey("test-key-123");
-  await env.DB.exec(`
-    INSERT OR IGNORE INTO api_keys (key_hash, tier, is_active)
-    VALUES ('${keyHash}', 'free', 1);
-  `);
+  await createTables(env.DB);
+  await seedApiKey(env.DB, "test-key-123");
 }
 
 describe("Rate Limiting", () => {
+  let kvKey: string;
+
   beforeAll(async () => {
     await setupDb();
+    const keyHash = await hashKey("test-key-123");
+    const today = new Date().toISOString().slice(0, 10);
+    kvKey = `ratelimit:${keyHash}:${today}`;
+  });
+
+  afterAll(async () => {
+    // Clean up so other tests aren't rate-limited
+    await env.KV.delete(kvKey);
   });
 
   it("includes rate limit headers", async () => {
@@ -61,12 +36,7 @@ describe("Rate Limiting", () => {
   });
 
   it("returns 429 when limit exceeded", async () => {
-    // Set KV counter to max
-    const keyHash = await hashKey("test-key-123");
-    const today = new Date().toISOString().slice(0, 10);
-    await env.KV.put(`ratelimit:${keyHash}:${today}`, "100", {
-      expirationTtl: 86400,
-    });
+    await env.KV.put(kvKey, "100", { expirationTtl: 86400 });
 
     const res = await app.fetch(
       new Request("http://localhost/v1/sakura/locations", {

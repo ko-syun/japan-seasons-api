@@ -5,6 +5,7 @@ import {
   buildStatusSummary,
 } from "../services/sakuraService.js";
 import { getCached, setCache, CACHE_KEYS, TTL } from "../services/cacheService.js";
+import { safeWaitUntil } from "../utils/waitUntil.js";
 
 const statusRoute = new Hono<{ Bindings: Env }>();
 
@@ -39,9 +40,7 @@ statusRoute.get("/", async (c) => {
   };
 
   if (cacheKey) {
-    c.executionCtx.waitUntil(
-      setCache(c.env.KV, cacheKey, response, TTL.status)
-    );
+    safeWaitUntil(c, setCache(c.env.KV, cacheKey, response, TTL.status));
   }
 
   return c.json(response);

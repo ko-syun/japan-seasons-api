@@ -90,10 +90,10 @@ export async function getForecastData(
   const params: unknown[] = [];
 
   if (city) {
-    locationFilter = "WHERE l.id = ?";
+    locationFilter = "WHERE id = ?";
     params.push(city);
   } else if (region) {
-    locationFilter = "WHERE l.region = ?";
+    locationFilter = "WHERE region = ?";
     params.push(region);
   }
 

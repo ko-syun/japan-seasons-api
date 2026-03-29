@@ -54,7 +54,7 @@ app.notFound((c) =>
 
 // ── Error handler ──
 app.onError((err, c) => {
-  const isProduction = c.env.ENVIRONMENT === "production";
+  const isProduction = c.env?.ENVIRONMENT === "production";
   return c.json(
     {
       error: {
@@ -62,6 +62,7 @@ app.onError((err, c) => {
         message: isProduction
           ? "An unexpected error occurred."
           : err.message,
+        ...(isProduction ? {} : { stack: err.stack }),
       },
     },
     500

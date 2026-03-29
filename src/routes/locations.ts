@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { Env, LocationsResponse } from "../types.js";
 import { LOCATION_BY_ID } from "../data/locations.js";
 import { getCached, setCache, CACHE_KEYS, TTL } from "../services/cacheService.js";
+import { safeWaitUntil } from "../utils/waitUntil.js";
 
 const locationsRoute = new Hono<{ Bindings: Env }>();
 
@@ -29,9 +30,7 @@ locationsRoute.get("/", async (c) => {
     meta: { total: data.length },
   };
 
-  c.executionCtx.waitUntil(
-    setCache(c.env.KV, CACHE_KEYS.locations, response, TTL.locations)
-  );
+  safeWaitUntil(c, setCache(c.env.KV, CACHE_KEYS.locations, response, TTL.locations));
 
   return c.json(response);
 });

@@ -9,7 +9,9 @@ export default defineWorkersConfig({
         miniflare: {
           d1Databases: ["DB"],
           kvNamespaces: ["KV"],
+          bindings: { ENVIRONMENT: "test" },
         },
+        isolatedStorage: false,
       },
     },
   },

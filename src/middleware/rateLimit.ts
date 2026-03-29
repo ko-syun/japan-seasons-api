@@ -1,5 +1,6 @@
 import { Context, Next } from "hono";
 import type { Env } from "../types.js";
+import { safeWaitUntil } from "../utils/waitUntil.js";
 
 const TIER_LIMITS: Record<string, number> = {
   free: 100,
@@ -52,7 +53,8 @@ export async function rateLimitMiddleware(
   }
 
   // Increment counter (fire-and-forget)
-  c.executionCtx.waitUntil(
+  safeWaitUntil(
+    c as unknown as Context,
     kv.put(kvKey, String(current + 1), { expirationTtl: 86400 })
   );
 
