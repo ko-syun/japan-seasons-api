@@ -269,7 +269,7 @@ export const aiPluginJson = JSON.stringify({
     "type": "openapi",
     "url": `${BASE_URL}/llms-full.txt`
   },
-  "logo_url": `${BASE_URL}/`,
+  "logo_url": `${BASE_URL}`,
   "contact_email": "jun@dokos.dev",
   "legal_info_url": "https://dokos.dev/legal"
 }, null, 2);

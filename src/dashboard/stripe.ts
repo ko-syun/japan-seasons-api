@@ -136,12 +136,8 @@ export async function verifyWebhookSignature(
     .join("");
 
   // Timing-safe comparison to prevent timing attacks
-  if (expectedSignature.length !== v1Signature.length) return false;
-  let result = 0;
-  for (let i = 0; i < expectedSignature.length; i++) {
-    result |= expectedSignature.charCodeAt(i) ^ v1Signature.charCodeAt(i);
-  }
-  return result === 0;
+  const { timingSafeEqual } = await import("../utils/crypto.js");
+  return timingSafeEqual(expectedSignature, v1Signature);
 }
 
 // ── Webhook Event Types ──

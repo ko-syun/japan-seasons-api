@@ -77,13 +77,8 @@ export async function verifyPassword(
   );
 
   // Timing-safe comparison to prevent timing attacks
-  const computed = arrayBufferToHex(hash);
-  if (computed.length !== hashHex.length) return false;
-  let result = 0;
-  for (let i = 0; i < computed.length; i++) {
-    result |= computed.charCodeAt(i) ^ hashHex.charCodeAt(i);
-  }
-  return result === 0;
+  const { timingSafeEqual } = await import("../utils/crypto.js");
+  return timingSafeEqual(arrayBufferToHex(hash), hashHex);
 }
 
 // ── JWT (HMAC SHA-256) ──
