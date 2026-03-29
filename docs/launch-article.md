@@ -69,6 +69,11 @@ Claude DesktopやAIエージェントからTools経由で直接呼び出し:
 ```
 10個のToolsを公開。認証不要。
 
+Claude Code CLIから追加する場合:
+```bash
+claude mcp add --transport http japan-seasons https://jpseasons.dokos.dev/mcp
+```
+
 ---
 
 ## 技術スタック

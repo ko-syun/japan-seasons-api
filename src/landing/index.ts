@@ -219,13 +219,16 @@ data = response.<span class="text-blue-400">json</span>()
         <pre class="p-5 text-sm overflow-x-auto"><code class="text-gray-300">{
   <span class="text-sakura">"mcpServers"</span>: {
     <span class="text-sakura">"japan-seasons"</span>: {
-      <span class="text-sakura">"url"</span>: <span class="text-autumn">"https://jpseasons.dokos.dev/mcp"</span>,
-      <span class="text-sakura">"headers"</span>: {
-        <span class="text-sakura">"Authorization"</span>: <span class="text-autumn">"Bearer YOUR_API_KEY"</span>
-      }
+      <span class="text-sakura">"url"</span>: <span class="text-autumn">"https://jpseasons.dokos.dev/mcp"</span>
     }
   }
 }</code></pre>
+      </div>
+      <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden mt-4">
+        <div class="flex items-center gap-2 px-4 py-2.5 border-b border-gray-800">
+          <span class="text-xs text-gray-500 font-mono">Claude Code CLI</span>
+        </div>
+        <pre class="p-5 text-sm overflow-x-auto"><code class="text-gray-300">claude mcp add --transport http japan-seasons https://jpseasons.dokos.dev/mcp</code></pre>
       </div>
       <div class="mt-6 grid sm:grid-cols-2 gap-4">
         <div class="bg-gray-900/50 rounded-lg border border-gray-800 p-4">

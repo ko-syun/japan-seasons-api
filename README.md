@@ -71,6 +71,12 @@ Connect AI agents via [Model Context Protocol](https://modelcontextprotocol.io):
 }
 ```
 
+### Claude Code CLI
+
+```bash
+claude mcp add --transport http japan-seasons https://jpseasons.dokos.dev/mcp
+```
+
 ### Available Tools
 
 | Tool | Description |
