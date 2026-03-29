@@ -59,12 +59,19 @@ Same pattern as sakura, under `/v1/kouyou/`:
 # Search by region/month/category
 curl -H "X-API-Key: $KEY" "https://jpseasons.dokos.dev/v1/matsuri/search?region=kansai&month=7"
 
-# Upcoming festivals (next 30 days)
-curl -H "X-API-Key: $KEY" "https://jpseasons.dokos.dev/v1/matsuri/upcoming"
+# Upcoming festivals (next N days, default 30, max 90)
+curl -H "X-API-Key: $KEY" "https://jpseasons.dokos.dev/v1/matsuri/upcoming?days=60"
 
-# Festival detail
+# Festival detail (ID is kebab-case, e.g. gion-matsuri, aomori-nebuta)
 curl -H "X-API-Key: $KEY" "https://jpseasons.dokos.dev/v1/matsuri/gion-matsuri"
 ```
+
+## Error Handling
+
+- `401` — Missing or invalid API key
+- `404` — Unknown city ID or festival ID
+- `429` — Rate limit exceeded (100/day free, 10K/day pro)
+- `400` — Invalid parameters (bad date format, missing required param)
 
 ## Common City IDs
 
