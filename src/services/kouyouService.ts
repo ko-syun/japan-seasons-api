@@ -435,7 +435,7 @@ async function getKouyouAlternatives(
   excludeCity: string,
   year: number
 ) {
-  const altCities = ["kyoto", "tokyo", "nikko", "osaka", "sendai"].filter(
+  const altCities = ["kyoto", "tokyo", "nagano", "osaka", "sendai"].filter(
     (c) => c !== excludeCity
   );
   const alternatives = [];

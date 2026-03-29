@@ -135,7 +135,13 @@ export async function verifyWebhookSignature(
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 
-  return expectedSignature === v1Signature;
+  // Timing-safe comparison to prevent timing attacks
+  if (expectedSignature.length !== v1Signature.length) return false;
+  let result = 0;
+  for (let i = 0; i < expectedSignature.length; i++) {
+    result |= expectedSignature.charCodeAt(i) ^ v1Signature.charCodeAt(i);
+  }
+  return result === 0;
 }
 
 // ── Webhook Event Types ──

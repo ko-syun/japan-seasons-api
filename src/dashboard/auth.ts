@@ -50,8 +50,13 @@ export async function verifyPassword(
   password: string,
   stored: string
 ): Promise<boolean> {
-  const [iterStr, saltHex, hashHex] = stored.split("$");
+  const parts = stored.split("$");
+  if (parts.length !== 3) return false;
+
+  const [iterStr, saltHex, hashHex] = parts;
   const iterations = parseInt(iterStr, 10);
+  if (Number.isNaN(iterations) || iterations < 1000) return false;
+
   const salt = new Uint8Array(hexToArrayBuffer(saltHex));
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
@@ -70,7 +75,15 @@ export async function verifyPassword(
     keyMaterial,
     HASH_LENGTH * 8
   );
-  return arrayBufferToHex(hash) === hashHex;
+
+  // Timing-safe comparison to prevent timing attacks
+  const computed = arrayBufferToHex(hash);
+  if (computed.length !== hashHex.length) return false;
+  let result = 0;
+  for (let i = 0; i < computed.length; i++) {
+    result |= computed.charCodeAt(i) ^ hashHex.charCodeAt(i);
+  }
+  return result === 0;
 }
 
 // ── JWT (HMAC SHA-256) ──

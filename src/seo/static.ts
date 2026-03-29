@@ -230,7 +230,7 @@ export const jsonLd = JSON.stringify({
     "name": "KoS LLC",
     "url": "https://dokos.dev"
   },
-  "termsOfService": `${BASE_URL}/dashboard`,
+  "termsOfService": "https://dokos.dev/legal",
   "offers": [
     {
       "@type": "Offer",
@@ -267,9 +267,9 @@ export const aiPluginJson = JSON.stringify({
   },
   "api": {
     "type": "openapi",
-    "url": `${BASE_URL}/openapi.json`
+    "url": `${BASE_URL}/llms-full.txt`
   },
-  "logo_url": `${BASE_URL}/logo.png`,
+  "logo_url": `${BASE_URL}/`,
   "contact_email": "jun@dokos.dev",
   "legal_info_url": "https://dokos.dev/legal"
 }, null, 2);
