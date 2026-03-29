@@ -3,6 +3,13 @@ main = "src/index.ts"
 compatibility_date = "2025-03-28"
 compatibility_flags = ["nodejs_compat"]
 
+workers_dev = true
+
+# Custom domain
+routes = [
+  { pattern = "jpseasons.dokos.dev", custom_domain = true }
+]
+
 # D1 Database
 [[d1_databases]]
 binding = "DB"
