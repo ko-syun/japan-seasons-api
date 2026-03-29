@@ -21,6 +21,11 @@
 - [PM] 実装完了: Hono + D1 + KV フルスタック
 - [PM] テスト 24/24 通過（scrapers/routes/middleware）
 - [PM] バグ修正: ExecutionContext getter, SQLエイリアス(l.id→id), テスト分離
+- [PM] Verification Loop完了 → verification-report.md作成
+- [PM] Kimiレビュー完了（Round 2でLGTM）
+  - Round 1: 🔴3件 🟡11件 🟢6件 → 全critical/warning修正
+  - Round 2: LGTM ✅
+- [PM] GitHub push完了: <https://github.com/ko-syun/japan-seasons-api>
 - [制約] Cloudflare Workers CPU time: 10ms (free) / 50ms (paid) — historical importはバッチ分割必須
 - [制約] D1 batch insert: 最大100行/バッチ
 - [制約] JMAスクレイピング: robots.txtに明示的禁止なし（DATA-SOURCES.md確認済み）、ただし礼儀として間隔を置く
