@@ -340,7 +340,7 @@ dashboard.post("/api/checkout", async (c) => {
   }
 
   const body = await c.req.json<{ price_id?: string }>().catch(() => ({}));
-  const priceId = (body as { price_id?: string }).price_id || "price_pro_monthly";
+  const priceId = (body as { price_id?: string }).price_id || "price_1TGC4H2cVeEKp8lHoJhVwXJJ";
 
   const origin = new URL(c.req.url).origin;
   const url = await createCheckoutSession(
