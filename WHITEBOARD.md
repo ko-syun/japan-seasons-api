@@ -18,6 +18,9 @@
 - [PM] プロジェクト開始: 2026-03-29
 - [PM] IMPLEMENTATION-PLAN.md 作成完了
 - [PM] 設計ドキュメント（Kuro作成）確認完了: README, DESIGN.md, PHASE1-SPEC.md, DATA-SOURCES.md
+- [PM] 実装完了: Hono + D1 + KV フルスタック
+- [PM] テスト 24/24 通過（scrapers/routes/middleware）
+- [PM] バグ修正: ExecutionContext getter, SQLエイリアス(l.id→id), テスト分離
 - [制約] Cloudflare Workers CPU time: 10ms (free) / 50ms (paid) — historical importはバッチ分割必須
 - [制約] D1 batch insert: 最大100行/バッチ
 - [制約] JMAスクレイピング: robots.txtに明示的禁止なし（DATA-SOURCES.md確認済み）、ただし礼儀として間隔を置く
