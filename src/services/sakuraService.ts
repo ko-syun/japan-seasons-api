@@ -173,7 +173,7 @@ function computeWindow(
   year: number
 ): DateWindow {
   if (sortedMonthDays.length === 0) {
-    return { earliest: "", typical: "", latest: "" };
+    return { earliest: null, typical: null, latest: null };
   }
 
   const earliest = sortedMonthDays[0];
@@ -344,6 +344,9 @@ export async function getRecommendation(
   const fullBloomStart = forecast.estimated_full_bloom_window.earliest;
   const fullBloomEnd = forecast.estimated_full_bloom_window.latest;
 
+  // No historical data for this location
+  if (!fullBloomStart || !fullBloomEnd) return null;
+
   // Calculate overlap with travel dates
   let overlap: string | null = null;
   let likelihood: "high" | "medium" | "low" = "medium";
@@ -377,10 +380,11 @@ export async function getRecommendation(
 
   const fullBloomPeriod = `${fullBloomStart}/${fullBloomEnd}`;
 
+  const typicalDate = forecast.estimated_full_bloom_window.typical;
   const summary = buildRecommendSummary(
     meta.name_en,
     likelihood,
-    forecast.estimated_full_bloom_window.typical
+    typicalDate ?? fullBloomStart
   );
 
   // Get alternatives from nearby regions
@@ -440,11 +444,14 @@ async function getAlternatives(
     if (altForecasts.length === 0) continue;
 
     const alt = altForecasts[0];
+    const typicalBloom = alt.estimated_bloom_window.typical;
+    if (!typicalBloom) continue;
+
     alternatives.push({
       city: altId,
       name: altMeta.name_en,
-      note: `Blooms around ${alt.estimated_bloom_window.typical.slice(5)}. Consider as alternative.`,
-      estimated_full_bloom_period: `${alt.estimated_full_bloom_window.earliest}/${alt.estimated_full_bloom_window.latest}`,
+      note: `Blooms around ${typicalBloom.slice(5)}. Consider as alternative.`,
+      estimated_full_bloom_period: `${alt.estimated_full_bloom_window.earliest ?? "unknown"}/${alt.estimated_full_bloom_window.latest ?? "unknown"}`,
     });
   }
 

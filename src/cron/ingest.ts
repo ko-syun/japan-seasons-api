@@ -115,9 +115,16 @@ function deriveStatus(
   fullBloomDate: string | null
 ): BloomStatus {
   if (!bloomDate) return "not_yet";
-  if (!fullBloomDate) return "blooming";
 
   const now = new Date();
+  const bloom = new Date(bloomDate);
+
+  // Bloom date is in the future — not yet blooming
+  if (now < bloom) return "not_yet";
+
+  // Bloomed but no full bloom date recorded yet
+  if (!fullBloomDate) return "blooming";
+
   const fullBloom = new Date(fullBloomDate);
   const daysSinceFullBloom = Math.floor(
     (now.getTime() - fullBloom.getTime()) / (1000 * 60 * 60 * 24)

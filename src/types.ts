@@ -108,9 +108,9 @@ export interface StatusResponse {
 // ── Forecast Endpoint ──
 
 export interface DateWindow {
-  earliest: string;
-  typical: string;
-  latest: string;
+  earliest: string | null;
+  typical: string | null;
+  latest: string | null;
 }
 
 export interface ForecastLocation {

@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { Env, RecommendResponse } from "../types.js";
 import { LOCATION_BY_ID } from "../data/locations.js";
 import { getRecommendation } from "../services/sakuraService.js";
+import { parseDateRange } from "../utils/params.js";
 
 const recommendRoute = new Hono<{ Bindings: Env }>();
 
@@ -23,15 +24,24 @@ recommendRoute.get("/", async (c) => {
     );
   }
 
-  // Parse date range "2026-03-25/2026-04-05"
+  // Parse and validate date range "2026-03-25/2026-04-05"
   let dateFrom: string | undefined;
   let dateTo: string | undefined;
   if (dates) {
-    const parts = dates.split("/");
-    if (parts.length === 2) {
-      dateFrom = parts[0];
-      dateTo = parts[1];
+    const range = parseDateRange(dates);
+    if (!range) {
+      return c.json(
+        {
+          error: {
+            code: "INVALID_DATE_FORMAT",
+            message:
+              "Expected format: YYYY-MM-DD/YYYY-MM-DD. Example: ?dates=2026-03-25/2026-04-05",
+          },
+        },
+        400
+      );
     }
+    [dateFrom, dateTo] = range;
   }
 
   const recommendation = await getRecommendation(

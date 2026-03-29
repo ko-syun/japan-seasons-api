@@ -5,6 +5,7 @@ import {
   getHistoricalRecords,
   computeStatistics,
 } from "../services/sakuraService.js";
+import { parseYear } from "../utils/params.js";
 
 const historicalRoute = new Hono<{ Bindings: Env }>();
 
@@ -37,20 +38,11 @@ historicalRoute.get("/", async (c) => {
   }
 
   const yearParam = c.req.query("year");
-  const fromYear = c.req.query("from_year");
-  const toYear = c.req.query("to_year");
+  const fromYearParam = c.req.query("from_year");
+  const toYearParam = c.req.query("to_year");
 
-  const from = yearParam
-    ? parseInt(yearParam, 10)
-    : fromYear
-      ? parseInt(fromYear, 10)
-      : undefined;
-
-  const to = yearParam
-    ? parseInt(yearParam, 10)
-    : toYear
-      ? parseInt(toYear, 10)
-      : undefined;
+  const from = parseYear(yearParam) ?? parseYear(fromYearParam);
+  const to = parseYear(yearParam) ?? parseYear(toYearParam);
 
   const records = await getHistoricalRecords(c.env.DB, city, from, to);
   const statistics = computeStatistics(records);

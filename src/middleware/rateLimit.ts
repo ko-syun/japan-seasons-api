@@ -2,6 +2,13 @@ import { Context, Next } from "hono";
 import type { Env } from "../types.js";
 import { safeWaitUntil } from "../utils/waitUntil.js";
 
+/**
+ * Rate limiting via KV counter.
+ * NOTE: KV has eventual consistency and no atomic increment.
+ * Under concurrent requests, the counter may under-count (last-write-wins).
+ * This is an approximate rate limit by design — acceptable for free tier.
+ * For strict enforcement, migrate to D1 with UPDATE ... SET count = count + 1.
+ */
 const TIER_LIMITS: Record<string, number> = {
   free: 100,
   pro: 10000,

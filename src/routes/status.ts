@@ -6,6 +6,7 @@ import {
 } from "../services/sakuraService.js";
 import { getCached, setCache, CACHE_KEYS, TTL } from "../services/cacheService.js";
 import { safeWaitUntil } from "../utils/waitUntil.js";
+import { parseYear } from "../utils/params.js";
 
 const statusRoute = new Hono<{ Bindings: Env }>();
 
@@ -13,7 +14,7 @@ statusRoute.get("/", async (c) => {
   const region = c.req.query("region");
   const status = c.req.query("status");
   const yearParam = c.req.query("year");
-  const year = yearParam ? parseInt(yearParam, 10) : new Date().getFullYear();
+  const year = parseYear(yearParam) ?? new Date().getFullYear();
 
   // Cache only for current year without filters
   const cacheKey = !region && !status && !yearParam ? CACHE_KEYS.status : null;
