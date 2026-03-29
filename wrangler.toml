@@ -7,12 +7,12 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "japan-seasons-db"
-database_id = "placeholder-replace-after-create"
+database_id = "8d349a78-3837-4ce2-83d7-d2ab1f07638c"
 
 # KV Namespace for caching
 [[kv_namespaces]]
 binding = "KV"
-id = "placeholder-replace-after-create"
+id = "23670483d21a463e87ba86253b9f26d9"
 
 # Cron Triggers - daily during sakura season
 [triggers]
