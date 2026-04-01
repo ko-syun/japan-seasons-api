@@ -23,7 +23,7 @@ id = "23670483d21a463e87ba86253b9f26d9"
 
 # Cron Triggers - daily during sakura season
 [triggers]
-crons = ["0 1 * * *"]
+crons = ["0 1 * * *", "10 0 1 * *"]
 
 # Environment variables
 [vars]
@@ -31,7 +31,9 @@ ENVIRONMENT = "production"
 # Set these via `wrangler secret put`:
 # STRIPE_SECRET_KEY
 # STRIPE_WEBHOOK_SECRET
+# STRIPE_PAYG_PRICE_ID
 # JWT_SECRET
+# X402_PAYTO_ADDRESS (Ethereum address to receive USDC payments via x402 protocol)
 
 # Staging environment
 [env.staging]

@@ -90,6 +90,7 @@ export interface SearchParams {
   region?: string;
   month?: number;
   city?: string;
+  prefecture?: string;
   category?: string;
   limit: number;
   offset: number;
@@ -109,6 +110,10 @@ export async function searchMatsuri(
   if (params.month) {
     conditions.push("month = ?");
     binds.push(params.month);
+  }
+  if (params.prefecture) {
+    conditions.push("prefecture LIKE ?");
+    binds.push(`%${params.prefecture}%`);
   }
   if (params.city) {
     conditions.push("(city LIKE ? OR prefecture LIKE ?)");

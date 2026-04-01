@@ -6,7 +6,9 @@ export interface Env {
   ENVIRONMENT: string;
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
+  STRIPE_PAYG_PRICE_ID?: string;
   JWT_SECRET?: string;
+  X402_PAYTO_ADDRESS?: string;
 }
 
 // ── Location Types ──

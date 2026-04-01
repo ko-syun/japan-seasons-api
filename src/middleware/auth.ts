@@ -22,6 +22,13 @@ export async function authMiddleware(
   c: Context<AuthContext>,
   next: Next
 ) {
+  // x402 payment was verified upstream — skip API key check
+  if (c.get("x402Paid" as never)) {
+    c.set("apiKeyTier", "payg");
+    c.set("apiKeyHash", "x402");
+    return next();
+  }
+
   const apiKey =
     c.req.header("X-API-Key") ??
     c.req.query("api_key");

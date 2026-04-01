@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { Env } from "./types.js";
 import { corsMiddleware } from "./middleware/cors.js";
 import { authMiddleware } from "./middleware/auth.js";
+import { x402Middleware, getPricingMap } from "./middleware/x402.js";
 import { rateLimitMiddleware } from "./middleware/rateLimit.js";
 import { statusRoute } from "./routes/status.js";
 import { forecastRoute } from "./routes/forecast.js";
@@ -14,6 +15,7 @@ import { kouyouHistoricalRoute } from "./routes/kouyou/historical.js";
 import { kouyouLocationsRoute } from "./routes/kouyou/locations.js";
 import { kouyouRecommendRoute } from "./routes/kouyou/recommend.js";
 import { handleScheduled } from "./cron/ingest.js";
+import { handleBillingCron } from "./cron/billing.js";
 import { adminRoute } from "./routes/admin.js";
 import { matsuriRoute } from "./routes/matsuri.js";
 import { mcpHandler } from "./mcp/server.js";
@@ -58,8 +60,25 @@ app.get("/", (c) => {
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 
+// ── x402 Payment Protocol info (no auth required) ──
+app.get("/x402/info", (c) => {
+  const payTo = c.env.X402_PAYTO_ADDRESS;
+  return c.json({
+    x402Version: 1,
+    supportedNetworks: ["base-sepolia"],
+    supportedAssets: ["USDC"],
+    pricing: getPricingMap(),
+    payTo: payTo ?? null,
+    documentation: "https://www.x402.org",
+    note: payTo
+      ? "Send X-PAYMENT header with signed payment to access API endpoints without an API key."
+      : "x402 payments not yet configured. Use X-API-Key header for access.",
+  });
+});
+
 // ── Authenticated routes ──
 const v1 = new Hono<{ Bindings: Env }>();
+v1.use("*", x402Middleware as never);
 v1.use("*", authMiddleware as never);
 v1.use("*", rateLimitMiddleware as never);
 
@@ -120,5 +139,18 @@ app.onError((err, c) => {
 // ── Export ──
 export default {
   fetch: app.fetch,
-  scheduled: handleScheduled,
+  scheduled: async (event: ScheduledEvent, env: Env, ctx: ExecutionContext) => {
+    // Daily ingest cron (existing)
+    if (event.cron === "0 1 * * *") {
+      await handleScheduled(event, env, ctx);
+    }
+    // Monthly billing cron (1st of month at 00:10 UTC)
+    if (event.cron === "10 0 1 * *") {
+      ctx.waitUntil(handleBillingCron(env));
+    }
+    // If cron doesn't match specific patterns, run ingest (backward compat)
+    if (event.cron !== "0 1 * * *" && event.cron !== "10 0 1 * *") {
+      await handleScheduled(event, env, ctx);
+    }
+  },
 };

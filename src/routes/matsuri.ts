@@ -19,6 +19,7 @@ matsuriRoute.get("/search", async (c) => {
   const region = c.req.query("region");
   const monthRaw = c.req.query("month");
   const city = c.req.query("city");
+  const prefecture = c.req.query("prefecture");
   const category = c.req.query("category");
   const limitRaw = c.req.query("limit");
   const offsetRaw = c.req.query("offset");
@@ -35,7 +36,7 @@ matsuriRoute.get("/search", async (c) => {
   const offset = Math.max(parseInt(offsetRaw ?? "0", 10) || 0, 0);
 
   // Cache key based on all params
-  const cacheKey = `${CACHE_PREFIX}:search:${region ?? ""}:${month ?? ""}:${city ?? ""}:${category ?? ""}:${limit}:${offset}`;
+  const cacheKey = `${CACHE_PREFIX}:search:${region ?? ""}:${month ?? ""}:${city ?? ""}:${prefecture ?? ""}:${category ?? ""}:${limit}:${offset}`;
   const cached = await getCached<unknown>(c.env.KV, cacheKey);
   if (cached) return c.json(cached);
 
@@ -43,6 +44,7 @@ matsuriRoute.get("/search", async (c) => {
     region,
     month,
     city,
+    prefecture,
     category,
     limit,
     offset,

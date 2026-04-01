@@ -13,6 +13,7 @@ const TIER_LIMITS: Record<string, number> = {
   free: 100,
   pro: 10000,
   enterprise: 100000,
+  payg: 1000000, // effectively unlimited
 };
 
 interface RateLimitContext {
@@ -26,6 +27,27 @@ interface RateLimitContext {
 function getTodayKey(hash: string): string {
   const today = new Date().toISOString().slice(0, 10);
   return `ratelimit:${hash}:${today}`;
+}
+
+function getToday(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * Record daily usage to D1 for PAYG billing.
+ * Fire-and-forget — failures here don't affect the request.
+ */
+async function recordUsageToD1(db: D1Database, keyHash: string): Promise<void> {
+  const date = getToday();
+  await db
+    .prepare(
+      `INSERT INTO usage_records (key_hash, date, request_count)
+       VALUES (?, ?, 1)
+       ON CONFLICT(key_hash, date)
+       DO UPDATE SET request_count = request_count + 1`
+    )
+    .bind(keyHash, date)
+    .run();
 }
 
 export async function rateLimitMiddleware(
@@ -42,7 +64,8 @@ export async function rateLimitMiddleware(
 
   const limit = TIER_LIMITS[tier] ?? TIER_LIMITS.free;
 
-  if (current >= limit) {
+  // PAYG tier: count but don't enforce daily cap
+  if (tier !== "payg" && current >= limit) {
     c.header("X-RateLimit-Limit", String(limit));
     c.header("X-RateLimit-Remaining", "0");
     c.header("Retry-After", "86400");
@@ -59,11 +82,19 @@ export async function rateLimitMiddleware(
     );
   }
 
-  // Increment counter (fire-and-forget)
+  // Increment KV counter (fire-and-forget)
   safeWaitUntil(
     c as unknown as Context,
     kv.put(kvKey, String(current + 1), { expirationTtl: 86400 })
   );
+
+  // For PAYG tier: also record to D1 for Stripe billing
+  if (tier === "payg") {
+    safeWaitUntil(
+      c as unknown as Context,
+      recordUsageToD1(c.env.DB, keyHash)
+    );
+  }
 
   const remaining = Math.max(0, limit - current - 1);
   c.header("X-RateLimit-Limit", String(limit));

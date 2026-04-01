@@ -1,12 +1,17 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { env } from "cloudflare:test";
 import app from "../../../src/index.js";
-import { createTables, seedApiKey, seedLocations } from "../../helpers/setupDb.js";
+import { createTables, seedApiKey, seedLocations, hashKey } from "../../helpers/setupDb.js";
 
 async function setupDb() {
   await createTables(env.DB);
   await seedLocations(env.DB);
   await seedApiKey(env.DB, "test-key-123");
+
+  // Clean up any rate limit pollution from other test suites
+  const keyHash = await hashKey("test-key-123");
+  const today = new Date().toISOString().slice(0, 10);
+  await env.KV.delete(`ratelimit:${keyHash}:${today}`);
 
   await env.DB.exec("INSERT OR IGNORE INTO kouyou_observations (location_id, year, color_date, fall_date, color_status, source, updated_at) VALUES ('tokyo', 2026, '2026-11-15', '2026-12-01', 'peak_color', 'jma', '2026-11-20')");
   await env.DB.exec("INSERT OR IGNORE INTO kouyou_observations (location_id, year, color_date, fall_date, color_status, source, updated_at) VALUES ('osaka', 2026, '2026-11-20', NULL, 'coloring', 'jma', '2026-11-20')");

@@ -12,6 +12,7 @@ import {
 import {
   createCustomer,
   createCheckoutSession,
+  createMeteredCheckoutSession,
   createPortalSession,
   verifyWebhookSignature,
   handleWebhookEvent,
@@ -194,7 +195,7 @@ dashboard.post("/api/keys", async (c) => {
     .bind(user.sub)
     .first<{ count: number }>();
 
-  const limit = tier === "pro" ? 10 : 2;
+  const limit = tier === "pro" || tier === "payg" ? 10 : 2;
   if (keyCount && keyCount.count >= limit) {
     return errorResponse(
       c,
@@ -285,22 +286,60 @@ dashboard.get("/api/usage", async (c) => {
     return c.json({ data: { daily: [], total_requests: 0 } });
   }
 
-  // For MVP, return basic usage data based on last_used_at
-  // A proper implementation would have a request_log table
   const userData = await c.env.DB.prepare(
     "SELECT tier FROM users WHERE id = ?"
   )
     .bind(user.sub)
     .first<{ tier: string }>();
 
-  return c.json({
-    data: {
-      tier: userData?.tier ?? "free",
-      keys_active: keys.length,
-      rate_limit: userData?.tier === "pro" ? 10000 : 100,
-      unit: "requests/day",
-    },
-  });
+  const tier = userData?.tier ?? "free";
+  const rateLimits: Record<string, number> = {
+    free: 100,
+    pro: 10000,
+    enterprise: 100000,
+    payg: 1000000,
+  };
+
+  const baseData: Record<string, unknown> = {
+    tier,
+    keys_active: keys.length,
+    rate_limit: rateLimits[tier] ?? 100,
+    unit: "requests/day",
+  };
+
+  // For PAYG users: include daily/monthly usage from D1
+  if (tier === "payg" && keys.length > 0) {
+    const keyHashes = keys.map((k) => k.key_hash);
+    const placeholders = keyHashes.map(() => "?").join(",");
+
+    // Today's usage
+    const today = new Date().toISOString().slice(0, 10);
+    const dailyUsage = await c.env.DB.prepare(
+      `SELECT COALESCE(SUM(request_count), 0) as count
+       FROM usage_records
+       WHERE key_hash IN (${placeholders}) AND date = ?`
+    )
+      .bind(...keyHashes, today)
+      .first<{ count: number }>();
+
+    // This month's usage
+    const monthStart = today.slice(0, 7) + "-01";
+    const monthlyUsage = await c.env.DB.prepare(
+      `SELECT COALESCE(SUM(request_count), 0) as count
+       FROM usage_records
+       WHERE key_hash IN (${placeholders}) AND date >= ?`
+    )
+      .bind(...keyHashes, monthStart)
+      .first<{ count: number }>();
+
+    baseData.usage = {
+      today: dailyUsage?.count ?? 0,
+      this_month: monthlyUsage?.count ?? 0,
+      estimated_cost_usd: ((monthlyUsage?.count ?? 0) * 0.001).toFixed(2),
+    };
+  }
+
+  return c.json({ data: baseData });
 });
 
 // ── Stripe Billing Routes ──
@@ -325,8 +364,15 @@ dashboard.post("/api/checkout", async (c) => {
     return errorResponse(c, "NOT_FOUND", "User not found.", 404);
   }
 
-  if (userData.tier === "pro") {
+  const body = await c.req.json<{ price_id?: string; tier?: string }>().catch(() => ({}));
+  const requestedTier = (body as { tier?: string }).tier ?? "pro";
+
+  if (userData.tier === "pro" && requestedTier === "pro") {
     return errorResponse(c, "ALREADY_PRO", "You are already on the Pro tier.", 400);
+  }
+
+  if (userData.tier === "payg" && requestedTier === "payg") {
+    return errorResponse(c, "ALREADY_PAYG", "You are already on the Pay-as-you-go tier.", 400);
   }
 
   let customerId = userData.stripe_customer_id;
@@ -339,17 +385,32 @@ dashboard.post("/api/checkout", async (c) => {
       .run();
   }
 
-  const body = await c.req.json<{ price_id?: string }>().catch(() => ({}));
-  const priceId = (body as { price_id?: string }).price_id || "price_1TGC4H2cVeEKp8lHoJhVwXJJ";
-
   const origin = new URL(c.req.url).origin;
-  const url = await createCheckoutSession(
-    customerId,
-    priceId,
-    `${origin}/dashboard?checkout=success`,
-    `${origin}/dashboard?checkout=cancelled`,
-    c.env.STRIPE_SECRET_KEY
-  );
+  let url: string;
+
+  if (requestedTier === "payg") {
+    const paygPriceId = (body as { price_id?: string }).price_id
+      || c.env.STRIPE_PAYG_PRICE_ID
+      || "price_payg_placeholder";
+
+    url = await createMeteredCheckoutSession(
+      customerId,
+      paygPriceId,
+      `${origin}/dashboard?checkout=success`,
+      `${origin}/dashboard?checkout=cancelled`,
+      c.env.STRIPE_SECRET_KEY
+    );
+  } else {
+    const priceId = (body as { price_id?: string }).price_id || "price_1TGC4H2cVeEKp8lHoJhVwXJJ";
+
+    url = await createCheckoutSession(
+      customerId,
+      priceId,
+      `${origin}/dashboard?checkout=success`,
+      `${origin}/dashboard?checkout=cancelled`,
+      c.env.STRIPE_SECRET_KEY
+    );
+  }
 
   return c.json({ data: { url } });
 });

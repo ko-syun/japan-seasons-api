@@ -92,6 +92,73 @@ export async function createPortalSession(
   return data.url as string;
 }
 
+// ── Metered Usage Reporting ──
+
+export async function reportUsage(
+  subscriptionItemId: string,
+  quantity: number,
+  secretKey: string
+): Promise<void> {
+  const response = await fetch(
+    `${STRIPE_API_BASE}/subscription_items/${subscriptionItemId}/usage_records`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: `quantity=${quantity}&action=increment`,
+    }
+  );
+
+  if (!response.ok) {
+    const data = (await response.json()) as Record<string, unknown>;
+    const err = data.error as Record<string, unknown> | undefined;
+    throw new Error(
+      `Stripe usage report failed: ${err?.message ?? response.statusText}`
+    );
+  }
+}
+
+// ── Metered Checkout Session ──
+
+export async function createMeteredCheckoutSession(
+  customerId: string,
+  priceId: string,
+  successUrl: string,
+  cancelUrl: string,
+  secretKey: string
+): Promise<string> {
+  const data = await stripeRequest(
+    "/checkout/sessions",
+    secretKey,
+    "POST",
+    {
+      customer: customerId,
+      "line_items[0][price]": priceId,
+      mode: "subscription",
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+    }
+  );
+  return data.url as string;
+}
+
+// ── Retrieve Subscription Items ──
+
+export async function getSubscriptionItems(
+  subscriptionId: string,
+  secretKey: string
+): Promise<Array<{ id: string; price: { id: string } }>> {
+  const data = await stripeRequest(
+    `/subscriptions/${subscriptionId}`,
+    secretKey,
+    "GET"
+  );
+  const items = data.items as { data: Array<{ id: string; price: { id: string } }> };
+  return items.data;
+}
+
 // ── Webhook Signature Verification ──
 
 export async function verifyWebhookSignature(
@@ -158,35 +225,74 @@ export async function handleWebhookEvent(
     case "checkout.session.completed": {
       const session = event.data.object;
       const customerId = session.customer as string;
-      // Upgrade user to pro
+      const subscriptionId = session.subscription as string | null;
+
+      // Determine if this is a PAYG or Pro checkout by checking metadata or subscription items
+      // For now, check if the session has metadata.tier = 'payg'
+      const metadata = session.metadata as Record<string, string> | undefined;
+      const tier = metadata?.tier === "payg" ? "payg" : "pro";
+
+      // Upgrade user
       await db
-        .prepare("UPDATE users SET tier = 'pro' WHERE stripe_customer_id = ?")
-        .bind(customerId)
+        .prepare("UPDATE users SET tier = ? WHERE stripe_customer_id = ?")
+        .bind(tier, customerId)
         .run();
-      // Update all user's active keys to pro tier
+
+      // Update all user's active keys
       await db
         .prepare(
-          `UPDATE user_api_keys SET tier = 'pro' WHERE user_id = (
+          `UPDATE user_api_keys SET tier = ? WHERE user_id = (
             SELECT id FROM users WHERE stripe_customer_id = ?
           ) AND is_active = 1`
         )
-        .bind(customerId)
+        .bind(tier, customerId)
         .run();
+
+      // For PAYG: store subscription item mapping
+      if (tier === "payg" && subscriptionId) {
+        const userId = await db
+          .prepare("SELECT id FROM users WHERE stripe_customer_id = ?")
+          .bind(customerId)
+          .first<{ id: string }>();
+
+        if (userId) {
+          // Store subscription ID — the item ID will be resolved during billing cron
+          await db
+            .prepare(
+              `INSERT INTO subscription_items (user_id, stripe_subscription_item_id, stripe_subscription_id)
+               VALUES (?, '', ?)
+               ON CONFLICT(user_id) DO UPDATE SET
+                 stripe_subscription_id = excluded.stripe_subscription_id`
+            )
+            .bind(userId.id, subscriptionId)
+            .run();
+        }
+      }
       break;
     }
     case "customer.subscription.updated": {
       const subscription = event.data.object;
       const customerId = subscription.customer as string;
       const status = subscription.status as string;
+
       if (status === "active") {
-        await db
-          .prepare(
-            "UPDATE users SET tier = 'pro' WHERE stripe_customer_id = ?"
-          )
+        // Check current tier — don't overwrite payg with pro or vice versa
+        const user = await db
+          .prepare("SELECT tier FROM users WHERE stripe_customer_id = ?")
           .bind(customerId)
-          .run();
+          .first<{ tier: string }>();
+
+        // Only update if currently free (initial activation)
+        if (user && user.tier === "free") {
+          await db
+            .prepare(
+              "UPDATE users SET tier = 'pro' WHERE stripe_customer_id = ?"
+            )
+            .bind(customerId)
+            .run();
+        }
       } else if (status === "past_due" || status === "unpaid") {
-        // Keep pro for now but could downgrade
+        // Keep current tier for now but could downgrade
       }
       break;
     }
@@ -205,6 +311,15 @@ export async function handleWebhookEvent(
           `UPDATE user_api_keys SET tier = 'free' WHERE user_id = (
             SELECT id FROM users WHERE stripe_customer_id = ?
           ) AND is_active = 1`
+        )
+        .bind(customerId)
+        .run();
+      // Clean up subscription items
+      await db
+        .prepare(
+          `DELETE FROM subscription_items WHERE user_id = (
+            SELECT id FROM users WHERE stripe_customer_id = ?
+          )`
         )
         .bind(customerId)
         .run();
