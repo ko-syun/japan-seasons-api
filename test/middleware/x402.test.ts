@@ -54,7 +54,7 @@ describe("x402 middleware", () => {
     expect(res.status).not.toBe(402);
   });
 
-  it("returns 400 for malformed X-PAYMENT header", async () => {
+  it("returns 501 for X-PAYMENT header (payment acceptance disabled until signature verification)", async () => {
     const testEnv = {
       ...env,
       X402_PAYTO_ADDRESS: "0x1234567890abcdef1234567890abcdef12345678",
@@ -66,7 +66,11 @@ describe("x402 middleware", () => {
     const res = await app.fetch(req, testEnv, ctx);
     await waitOnExecutionContext(ctx);
 
-    expect(res.status).toBe(400);
+    // Payment acceptance is disabled until EIP-712 signature verification is implemented
+    expect(res.status).toBe(501);
+    const body = (await res.json()) as Record<string, unknown>;
+    const error = body.error as Record<string, unknown>;
+    expect(error.code).toBe("PAYMENT_NOT_YET_SUPPORTED");
   });
 
   it("/x402/info returns pricing info without auth", async () => {

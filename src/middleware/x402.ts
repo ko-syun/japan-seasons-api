@@ -77,7 +77,23 @@ export async function x402Middleware(
     );
   }
 
-  // Verify payment from X-PAYMENT header
+  // SECURITY: Full EIP-712 signature verification is not yet implemented.
+  // Until it is, x402 payment acceptance is DISABLED to prevent spoofed payments.
+  // The 402 response above still works for discovery (agents can see pricing).
+  // Payment acceptance will be enabled once verifyPayment() has on-chain verification.
+  return c.json(
+    {
+      error: {
+        code: "PAYMENT_NOT_YET_SUPPORTED",
+        message:
+          "x402 payment verification is coming soon. Use an API key for now. Get one free at https://jpseasons.dokos.dev/dashboard",
+      },
+    },
+    501
+  );
+
+  // --- Below is the payment verification flow (disabled until signature verification is implemented) ---
+  /*
   try {
     const payment = parsePaymentHeader(paymentHeader);
 
@@ -124,6 +140,7 @@ export async function x402Middleware(
       400
     );
   }
+  */
 }
 
 function getPrice(path: string): number {

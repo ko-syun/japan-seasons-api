@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import { env } from "cloudflare:test";
 import app from "../../../src/index.js";
 import { createTables, seedApiKey, seedLocations, hashKey } from "../../helpers/setupDb.js";
@@ -18,6 +18,13 @@ async function setupDb() {
 }
 
 describe("GET /v1/kouyou/status", () => {
+  beforeEach(async () => {
+    // Clean rate limit pollution from other suites
+    const keyHash = await hashKey("test-key-123");
+    const today = new Date().toISOString().slice(0, 10);
+    await env.KV.delete(`ratelimit:${keyHash}:${today}`);
+  });
+
   beforeAll(async () => {
     await setupDb();
   });
