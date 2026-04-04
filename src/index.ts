@@ -69,10 +69,12 @@ app.get("/x402/info", (c) => {
     supportedAssets: ["USDC"],
     pricing: getPricingMap(),
     payTo: payTo ?? null,
+    facilitator: "https://x402.org/facilitator",
     documentation: "https://www.x402.org",
     note: payTo
-      ? "Send X-PAYMENT header with signed payment to access API endpoints without an API key."
+      ? "Send PAYMENT-SIGNATURE header (base64-encoded) or X-PAYMENT header with signed payment to access API endpoints without an API key."
       : "x402 payments not yet configured. Use X-API-Key header for access.",
+    paymentAccepted: !!payTo,
   });
 });
 

@@ -54,23 +54,79 @@ describe("x402 middleware", () => {
     expect(res.status).not.toBe(402);
   });
 
-  it("returns 501 for X-PAYMENT header (payment acceptance disabled until signature verification)", async () => {
+  it("returns 400 for malformed payment header", async () => {
     const testEnv = {
       ...env,
       X402_PAYTO_ADDRESS: "0x1234567890abcdef1234567890abcdef12345678",
     };
     const req = new Request("https://jpseasons.dokos.dev/v1/sakura/forecast?city=tokyo", {
-      headers: { "X-PAYMENT": "not-valid-json" },
+      headers: { "X-PAYMENT": "not-valid-json-or-base64" },
     });
     const ctx = createExecutionContext();
     const res = await app.fetch(req, testEnv, ctx);
     await waitOnExecutionContext(ctx);
 
-    // Payment acceptance is disabled until EIP-712 signature verification is implemented
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(400);
     const body = (await res.json()) as Record<string, unknown>;
     const error = body.error as Record<string, unknown>;
-    expect(error.code).toBe("PAYMENT_NOT_YET_SUPPORTED");
+    expect(error.code).toBe("PAYMENT_MALFORMED");
+  });
+
+  it("rejects payment with wrong payTo address via pre-check", async () => {
+    const testEnv = {
+      ...env,
+      X402_PAYTO_ADDRESS: "0x1234567890abcdef1234567890abcdef12345678",
+    };
+    // Create a payment payload with a mismatched payTo
+    const paymentPayload = {
+      payload: {
+        payTo: "0xWRONGADDRESS000000000000000000000000000",
+        amount: "1000",
+        network: "base-sepolia",
+      },
+      signature: "0xfakesignature",
+    };
+    const encoded = btoa(JSON.stringify(paymentPayload));
+    const req = new Request("https://jpseasons.dokos.dev/v1/sakura/forecast?city=tokyo", {
+      headers: { "X-PAYMENT": encoded },
+    });
+    const ctx = createExecutionContext();
+    const res = await app.fetch(req, testEnv, ctx);
+    await waitOnExecutionContext(ctx);
+
+    expect(res.status).toBe(402);
+    const body = (await res.json()) as Record<string, unknown>;
+    const error = body.error as Record<string, unknown>;
+    expect(error.code).toBe("PAYMENT_INVALID");
+    expect(error.message).toContain("payTo");
+  });
+
+  it("rejects payment with wrong network via pre-check", async () => {
+    const testEnv = {
+      ...env,
+      X402_PAYTO_ADDRESS: "0x1234567890abcdef1234567890abcdef12345678",
+    };
+    const paymentPayload = {
+      payload: {
+        payTo: "0x1234567890abcdef1234567890abcdef12345678",
+        amount: "1000",
+        network: "ethereum-mainnet",
+      },
+      signature: "0xfakesignature",
+    };
+    const encoded = btoa(JSON.stringify(paymentPayload));
+    const req = new Request("https://jpseasons.dokos.dev/v1/sakura/forecast?city=tokyo", {
+      headers: { "X-PAYMENT": encoded },
+    });
+    const ctx = createExecutionContext();
+    const res = await app.fetch(req, testEnv, ctx);
+    await waitOnExecutionContext(ctx);
+
+    expect(res.status).toBe(402);
+    const body = (await res.json()) as Record<string, unknown>;
+    const error = body.error as Record<string, unknown>;
+    expect(error.code).toBe("PAYMENT_INVALID");
+    expect(error.message).toContain("network");
   });
 
   it("/x402/info returns pricing info without auth", async () => {
@@ -89,5 +145,18 @@ describe("x402 middleware", () => {
     expect(body).toHaveProperty("supportedNetworks");
     expect(body).toHaveProperty("pricing");
     expect(body).toHaveProperty("payTo", "0xTestAddress");
+    expect(body).toHaveProperty("paymentAccepted", true);
+    expect(body).toHaveProperty("facilitator");
+  });
+
+  it("/x402/info shows paymentAccepted:false when no payTo", async () => {
+    const req = new Request("https://jpseasons.dokos.dev/x402/info");
+    const ctx = createExecutionContext();
+    const res = await app.fetch(req, env, ctx);
+    await waitOnExecutionContext(ctx);
+
+    expect(res.status).toBe(200);
+    const body = await res.json() as Record<string, unknown>;
+    expect(body).toHaveProperty("paymentAccepted", false);
   });
 });

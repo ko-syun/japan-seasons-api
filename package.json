@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.28.0",
+    "@x402/hono": "^2.9.0",
     "cheerio": "^1.0.0",
     "hono": "^4.7.0"
   },

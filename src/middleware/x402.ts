@@ -1,5 +1,7 @@
 import { Context, Next } from "hono";
 import type { Env } from "../types.js";
+import { HTTPFacilitatorClient } from "@x402/core/server";
+import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
 
 // Pricing per endpoint path (in USDC base units, 6 decimals)
 // e.g. 500 = 0.0005 USDC, 1000 = 0.001 USDC
@@ -21,12 +23,28 @@ const ENDPOINT_PRICES: Record<string, number> = {
 // USDC contract on Base Sepolia testnet
 const USDC_BASE_SEPOLIA = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 
+// x402 network identifier for Base Sepolia
+const NETWORK = "base-sepolia";
+
+// Default facilitator URL (x402.org public facilitator)
+const FACILITATOR_URL = "https://x402.org/facilitator";
+
+// Lazy-initialized facilitator client (shared across requests)
+let facilitatorClient: HTTPFacilitatorClient | null = null;
+
+function getFacilitatorClient(): HTTPFacilitatorClient {
+  if (!facilitatorClient) {
+    facilitatorClient = new HTTPFacilitatorClient({ url: FACILITATOR_URL });
+  }
+  return facilitatorClient;
+}
+
 /**
  * x402 Payment Protocol middleware.
  *
  * Flow:
  * 1. If X-API-Key header present → skip (existing auth handles it)
- * 2. If X-PAYMENT header present → verify payment, serve request
+ * 2. If payment header present → verify via facilitator, settle, serve request
  * 3. Neither → return HTTP 402 with payment requirements
  */
 export async function x402Middleware(
@@ -46,8 +64,10 @@ export async function x402Middleware(
     return next();
   }
 
-  // Check for x402 payment header
-  const paymentHeader = c.req.header("X-PAYMENT");
+  // Check for payment header (v2: PAYMENT-SIGNATURE, v1: X-PAYMENT)
+  const paymentHeader =
+    c.req.header("PAYMENT-SIGNATURE") ??
+    c.req.header("X-PAYMENT");
 
   if (!paymentHeader) {
     // Return 402 with payment requirements per x402 spec
@@ -60,7 +80,7 @@ export async function x402Middleware(
         accepts: [
           {
             scheme: "exact",
-            network: "base-sepolia",
+            network: NETWORK,
             maxAmountRequired: String(price),
             resource: c.req.url,
             payTo,
@@ -77,59 +97,150 @@ export async function x402Middleware(
     );
   }
 
-  // SECURITY: Full EIP-712 signature verification is not yet implemented.
-  // Until it is, x402 payment acceptance is DISABLED to prevent spoofed payments.
-  // The 402 response above still works for discovery (agents can see pricing).
-  // Payment acceptance will be enabled once verifyPayment() has on-chain verification.
-  return c.json(
-    {
-      error: {
-        code: "PAYMENT_NOT_YET_SUPPORTED",
-        message:
-          "x402 payment verification is coming soon. Use an API key for now. Get one free at https://jpseasons.dokos.dev/dashboard",
-      },
-    },
-    501
-  );
-
-  // --- Below is the payment verification flow (disabled until signature verification is implemented) ---
-  /*
+  // ── Payment verification via x402 facilitator ──
   try {
-    const payment = parsePaymentHeader(paymentHeader);
+    const paymentPayload = parsePaymentPayload(paymentHeader);
 
-    if (!payment) {
+    if (!paymentPayload) {
       return c.json(
         {
           error: {
             code: "PAYMENT_MALFORMED",
             message:
-              "X-PAYMENT header is malformed. Expected JSON with payload and signature.",
+              "Payment header is malformed. Expected base64-encoded JSON payment payload.",
           },
         },
         400
       );
     }
 
+    // Build payment requirements for this request
     const path = new URL(c.req.url).pathname;
     const requiredAmount = getPrice(path);
-    const isValid = await verifyPayment(payment, payTo, requiredAmount);
 
-    if (!isValid) {
+    const paymentRequirements: PaymentRequirements = {
+      scheme: "exact",
+      network: NETWORK as PaymentRequirements["network"],
+      amount: String(requiredAmount),
+      payTo,
+      maxTimeoutSeconds: 60,
+      asset: USDC_BASE_SEPOLIA,
+      extra: {
+        name: "Japan Seasons API",
+        description: `Access to ${path}`,
+      },
+    };
+
+    // Quick structural pre-checks before calling facilitator
+    const preCheckError = preCheckPayment(paymentPayload, payTo, requiredAmount);
+    if (preCheckError) {
       return c.json(
         {
           error: {
             code: "PAYMENT_INVALID",
-            message: "Payment verification failed.",
+            message: preCheckError,
           },
         },
         402
       );
     }
 
+    // Replay attack prevention: hash the signature and check KV
+    // Use the full payment payload as replay key (covers all signature variants)
+    const signatureStr = JSON.stringify(paymentPayload);
+    const sigData = new TextEncoder().encode(signatureStr);
+    const sigHashBuf = await crypto.subtle.digest("SHA-256", sigData);
+    const sigHash = Array.from(new Uint8Array(sigHashBuf))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    const replayKey = `x402:sig:${sigHash}`;
+
+    const existing = await c.env.KV.get(replayKey);
+    if (existing) {
+      return c.json(
+        {
+          error: {
+            code: "PAYMENT_REPLAY",
+            message: "This payment signature has already been used.",
+          },
+        },
+        402
+      );
+    }
+
+    // Verify payment via facilitator
+    const client = getFacilitatorClient();
+    const verifyResult = await client.verify(
+      paymentPayload,
+      paymentRequirements,
+    );
+
+    if (!verifyResult.isValid) {
+      return c.json(
+        {
+          error: {
+            code: "PAYMENT_INVALID",
+            message: verifyResult.invalidReason ?? "Payment verification failed.",
+          },
+        },
+        402
+      );
+    }
+
+    // Mark signature as used (TTL: 24 hours — ERC-3009 nonces prevent on-chain replay,
+    // this is an additional off-chain layer)
+    await c.env.KV.put(replayKey, "1", { expirationTtl: 86400 });
+
     // Payment verified — flag for auth middleware to skip API key check
     c.set("x402Paid" as never, true as never);
-    return next();
-  } catch {
+
+    // Execute the route handler
+    await next();
+
+    // After route handler: settle the payment on-chain via facilitator
+    // Only settle if the response was successful (2xx)
+    if (c.res && c.res.status < 400) {
+      try {
+        const settleResult = await client.settle(
+          paymentPayload,
+          paymentRequirements,
+        );
+
+        // Add settlement info to response headers
+        if (settleResult.success && settleResult.transaction) {
+          c.header("X-Payment-Transaction", settleResult.transaction);
+          c.header("X-Payment-Network", settleResult.network ?? NETWORK);
+        }
+
+        if (!settleResult.success) {
+          // Settlement failed — log but don't fail the response
+          // The payment was verified, so the user should still get their data
+          console.error(
+            `x402 settlement failed: ${settleResult.errorReason ?? "unknown"}`,
+          );
+        }
+      } catch (settleError) {
+        // Settlement error — log but don't fail the response
+        console.error("x402 settlement error:", settleError);
+      }
+    }
+  } catch (error) {
+    // If this is a facilitator communication error, return 502
+    if (
+      error instanceof Error &&
+      error.message.includes("Facilitator")
+    ) {
+      return c.json(
+        {
+          error: {
+            code: "PAYMENT_FACILITATOR_ERROR",
+            message: "Payment facilitator is unavailable. Try again later or use an API key.",
+          },
+        },
+        502
+      );
+    }
+
     return c.json(
       {
         error: {
@@ -140,7 +251,6 @@ export async function x402Middleware(
       400
     );
   }
-  */
 }
 
 function getPrice(path: string): number {
@@ -161,81 +271,68 @@ export function getPricingMap(): Record<string, string> {
   return map;
 }
 
-// ── Payment parsing & verification ──
+// ── Payment parsing & pre-checks ──
 
-interface ParsedPayment {
-  payload: {
-    amount: string | number;
-    asset: string;
-    network: string;
-    payTo: string;
-    resource: string;
-    [key: string]: unknown;
-  };
-  signature: string;
-}
+/**
+ * Parse payment from header. Supports:
+ * - Base64-encoded JSON (v2 PAYMENT-SIGNATURE format)
+ * - Raw JSON (v1 X-PAYMENT fallback)
+ */
+function parsePaymentPayload(header: string): PaymentPayload | null {
+  // Try base64 decode first (v2 format)
+  try {
+    const decoded = atob(header);
+    const parsed = JSON.parse(decoded);
+    if (parsed && typeof parsed === "object" && "payload" in parsed) {
+      return parsed as PaymentPayload;
+    }
+  } catch {
+    // Not base64, try raw JSON
+  }
 
-function parsePaymentHeader(header: string): ParsedPayment | null {
+  // Try raw JSON (v1 format)
   try {
     const parsed = JSON.parse(header);
-    if (parsed && typeof parsed === "object" && parsed.payload && parsed.signature) {
-      return parsed as ParsedPayment;
+    if (parsed && typeof parsed === "object" && "payload" in parsed) {
+      return parsed as PaymentPayload;
     }
-    return null;
   } catch {
-    // Could be base64-encoded
-    try {
-      const decoded = atob(header);
-      const parsed = JSON.parse(decoded);
-      if (parsed && typeof parsed === "object" && parsed.payload && parsed.signature) {
-        return parsed as ParsedPayment;
-      }
-      return null;
-    } catch {
-      return null;
-    }
+    // Neither base64 nor JSON
   }
+
+  return null;
 }
 
-async function verifyPayment(
-  payment: ParsedPayment,
+/**
+ * Quick structural pre-checks before calling the facilitator.
+ * Returns an error message if the payment is obviously invalid,
+ * or null if it passes pre-checks.
+ */
+function preCheckPayment(
+  payment: PaymentPayload,
   expectedPayTo: string,
-  requiredAmount: number
-): Promise<boolean> {
-  const { payload } = payment;
-
-  // Basic structural checks
-  if (!payload.payTo || !payload.amount) {
-    return false;
+  _requiredAmount: number,
+): string | null {
+  const payload = payment.payload;
+  if (!payload) {
+    return "Payment payload is missing.";
   }
 
-  // Check payTo matches our address (case-insensitive for Ethereum addresses)
-  if (payload.payTo.toLowerCase() !== expectedPayTo.toLowerCase()) {
-    return false;
+  // If payload has payTo, verify it matches
+  const payTo = payload.payTo as string | undefined;
+  if (
+    payTo &&
+    typeof payTo === "string" &&
+    payTo.toLowerCase() !== expectedPayTo.toLowerCase()
+  ) {
+    return "Payment payTo address does not match.";
   }
 
-  // Check amount is sufficient
-  const paidAmount =
-    typeof payload.amount === "string"
-      ? parseInt(payload.amount, 10)
-      : payload.amount;
-  if (isNaN(paidAmount) || paidAmount < requiredAmount) {
-    return false;
+  // If payload specifies a network, verify it matches
+  const network = payload.network as string | undefined;
+  if (network && network !== NETWORK) {
+    return `Payment network mismatch. Expected ${NETWORK}.`;
   }
 
-  // Check network
-  if (payload.network && payload.network !== "base-sepolia") {
-    return false;
-  }
-
-  // TODO: Implement on-chain signature verification
-  // For MVP, the structural checks above are sufficient to demonstrate
-  // the x402 protocol flow. Full verification would:
-  // 1. Recover the signer address from the EIP-712 signature
-  // 2. Verify the signer has sufficient USDC balance
-  // 3. Verify the payment hasn't been replayed (nonce check)
-  // 4. Optionally settle on-chain via a facilitator contract
-
-  // For now, accept payments that pass structural validation
-  return true;
+  return null;
 }
