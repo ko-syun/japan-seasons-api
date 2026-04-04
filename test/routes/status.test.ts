@@ -15,6 +15,11 @@ async function setupDb() {
 describe("GET /v1/sakura/status", () => {
   beforeAll(async () => {
     await setupDb();
+    // Clear KV rate-limit pollution from other test suites
+    const crypto = await import("node:crypto");
+    const keyHash = crypto.createHash("sha256").update("test-key-123").digest("hex").slice(0, 16);
+    const today = new Date().toISOString().slice(0, 10);
+    await env.KV.delete(`ratelimit:${keyHash}:${today}`);
   });
 
   it("returns 401 without API key", async () => {

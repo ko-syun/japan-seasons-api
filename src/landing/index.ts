@@ -13,9 +13,11 @@ export const landingHtml = `<!DOCTYPE html>
   <meta property="og:description" content="Cherry blossoms, autumn foliage &amp; festivals — one API for AI agents and developers">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://jpseasons.dokos.dev">
+  <meta property="og:image" content="https://raw.githubusercontent.com/ko-syun/japan-seasons-api/main/public/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Japan Seasons API">
   <meta name="twitter:description" content="Cherry blossoms, autumn foliage &amp; festivals — one API for AI agents and developers">
+  <meta name="twitter:image" content="https://raw.githubusercontent.com/ko-syun/japan-seasons-api/main/public/og-image.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -25,7 +27,7 @@ export const landingHtml = `<!DOCTYPE html>
       theme: {
         extend: {
           fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
-          colors: { sakura: '#F472B6', autumn: '#FB923C', matsuri: '#EF4444' }
+          colors: { sakura: '#F472B6', autumn: '#FB923C', matsuri: '#EF4444', x402: '#06B6D4' }
         }
       }
     }
@@ -51,6 +53,7 @@ export const landingHtml = `<!DOCTYPE html>
         <a href="#features" class="hover:text-white transition">Features</a>
         <a href="#docs" class="hover:text-white transition">Docs</a>
         <a href="#mcp" class="hover:text-white transition">MCP</a>
+        <a href="#x402" class="hover:text-white transition">x402</a>
         <a href="#pricing" class="hover:text-white transition">Pricing</a>
         <a href="/dashboard" class="ml-2 px-4 py-1.5 bg-sakura/10 text-sakura rounded-lg hover:bg-sakura/20 transition font-medium">Dashboard</a>
       </div>
@@ -62,6 +65,7 @@ export const landingHtml = `<!DOCTYPE html>
       <a href="#features" class="block py-2 text-gray-400 hover:text-white">Features</a>
       <a href="#docs" class="block py-2 text-gray-400 hover:text-white">Docs</a>
       <a href="#mcp" class="block py-2 text-gray-400 hover:text-white">MCP</a>
+      <a href="#x402" class="block py-2 text-gray-400 hover:text-white">x402</a>
       <a href="#pricing" class="block py-2 text-gray-400 hover:text-white">Pricing</a>
       <a href="/dashboard" class="block py-2 text-sakura font-medium">Dashboard →</a>
     </div>
@@ -76,7 +80,7 @@ export const landingHtml = `<!DOCTYPE html>
         <span class="gradient-text">Japan Seasons API</span>
       </h1>
       <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-        Cherry blossoms, autumn foliage &amp; festivals — one API for AI agents and developers
+        Cherry blossoms, autumn foliage &amp; festivals — one x402-enabled API for AI agents and developers
       </p>
       <div class="flex flex-col sm:flex-row gap-3 justify-center mb-12">
         <a href="/dashboard" class="px-6 py-3 bg-sakura text-white font-semibold rounded-lg hover:bg-pink-500 transition shadow-lg shadow-sakura/20">
@@ -255,12 +259,85 @@ data = response.<span class="text-blue-400">json</span>()
     </div>
   </section>
 
+  <!-- x402 -->
+  <section id="x402" class="py-20 px-4 bg-gray-900/30">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-10">
+        <span class="text-xs px-3 py-1 rounded-full bg-x402/10 text-x402 font-medium uppercase tracking-wider">HTTP 402</span>
+        <h2 class="text-3xl font-bold mt-4 mb-4">Pay-per-Request with Crypto</h2>
+        <p class="text-gray-400 max-w-xl mx-auto">The x402 protocol enables AI agents to pay for API calls using USDC on Base — no API key, no signup, no subscription. Just HTTP.</p>
+      </div>
+
+      <div class="grid sm:grid-cols-3 gap-4 mb-8">
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-5 text-center">
+          <div class="text-2xl mb-2">📡</div>
+          <h4 class="font-medium text-sm mb-1">1. Request</h4>
+          <p class="text-xs text-gray-400">Agent calls any API endpoint without credentials</p>
+        </div>
+        <div class="bg-gray-900 rounded-xl border border-x402/30 p-5 text-center">
+          <div class="text-2xl mb-2">💰</div>
+          <h4 class="font-medium text-sm mb-1 text-x402">2. 402 Response</h4>
+          <p class="text-xs text-gray-400">Server returns price &amp; payment details in headers</p>
+        </div>
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-5 text-center">
+          <div class="text-2xl mb-2">✅</div>
+          <h4 class="font-medium text-sm mb-1">3. Data Returned</h4>
+          <p class="text-xs text-gray-400">Agent pays USDC on Base, data is returned instantly</p>
+        </div>
+      </div>
+
+      <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden mb-4">
+        <div class="flex items-center gap-2 px-4 py-2.5 border-b border-gray-800">
+          <span class="text-xs text-gray-500 font-mono">402 Response</span>
+        </div>
+        <pre class="p-5 text-sm overflow-x-auto"><code class="text-gray-300">HTTP/1.1 <span class="text-x402">402 Payment Required</span>
+X-Payment-Network: <span class="text-autumn">base</span>
+X-Payment-Token: <span class="text-autumn">USDC</span>
+X-Payment-Amount: <span class="text-autumn">1000</span>  <span class="text-gray-500">// 0.001 USDC</span>
+X-Payment-Address: <span class="text-autumn">0x...</span>
+
+<span class="text-gray-500">{</span>
+  <span class="text-x402">"error"</span>: <span class="text-autumn">"Payment Required"</span>,
+  <span class="text-x402">"x402"</span>: {
+    <span class="text-x402">"price"</span>: <span class="text-autumn">"0.001 USDC"</span>,
+    <span class="text-x402">"network"</span>: <span class="text-autumn">"base"</span>,
+    <span class="text-x402">"accepts"</span>: [<span class="text-autumn">"USDC"</span>]
+  }
+<span class="text-gray-500">}</span></code></pre>
+      </div>
+
+      <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden mb-6">
+        <div class="flex items-center gap-2 px-4 py-2.5 border-b border-gray-800">
+          <span class="text-xs text-gray-500 font-mono">@x402/fetch usage</span>
+        </div>
+        <pre class="p-5 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-purple-400">import</span> { fetchWithPayment } <span class="text-purple-400">from</span> <span class="text-autumn">"@x402/fetch"</span>;
+
+<span class="text-purple-400">const</span> response = <span class="text-purple-400">await</span> <span class="text-blue-400">fetchWithPayment</span>(
+  <span class="text-autumn">"https://jpseasons.dokos.dev/v1/sakura/status?station=tokyo"</span>,
+  { wallet }  <span class="text-gray-500">// USDC wallet on Base</span>
+);
+
+<span class="text-purple-400">const</span> data = <span class="text-purple-400">await</span> response.<span class="text-blue-400">json</span>();
+<span class="text-gray-500">// Paid 0.001 USDC — no API key needed</span></code></pre>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <span class="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-full bg-x402/10 text-x402 border border-x402/20 font-medium">
+          💳 No API key needed — pay per request with USDC
+        </span>
+        <a href="/x402/info" class="text-sm text-x402 hover:text-cyan-300 transition font-medium underline underline-offset-4">
+          Learn more about x402 →
+        </a>
+      </div>
+    </div>
+  </section>
+
   <!-- Pricing -->
   <section id="pricing" class="py-20 px-4 bg-gray-900/30">
     <div class="max-w-5xl mx-auto">
       <h2 class="text-3xl font-bold text-center mb-4">Simple Pricing</h2>
       <p class="text-gray-400 text-center mb-12">Start free. Scale when you need to.</p>
-      <div class="grid md:grid-cols-3 gap-6">
+      <div class="grid md:grid-cols-4 gap-5">
         <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
           <h3 class="font-semibold text-lg mb-1">Free</h3>
           <div class="text-3xl font-bold mb-4">$0<span class="text-sm font-normal text-gray-500">/mo</span></div>
@@ -271,6 +348,18 @@ data = response.<span class="text-blue-400">json</span>()
             <li class="flex items-start gap-2"><span class="text-green-400 mt-0.5">✓</span> MCP access</li>
           </ul>
           <a href="/dashboard" class="block text-center py-2.5 rounded-lg border border-gray-700 text-sm font-medium hover:bg-gray-800 transition">Start Free</a>
+        </div>
+        <div class="bg-gray-900 rounded-xl border border-x402/30 p-6 relative">
+          <span class="absolute -top-3 left-1/2 -translate-x-1/2 text-xs px-3 py-1 bg-x402 text-white rounded-full font-medium">New</span>
+          <h3 class="font-semibold text-lg mb-1">Pay-as-you-go</h3>
+          <div class="text-3xl font-bold mb-4"><span class="text-lg">$</span>0.001<span class="text-sm font-normal text-gray-500">/req</span></div>
+          <ul class="text-sm text-gray-400 space-y-2.5 mb-6">
+            <li class="flex items-start gap-2"><span class="text-x402 mt-0.5">✓</span> Stripe metered billing</li>
+            <li class="flex items-start gap-2"><span class="text-x402 mt-0.5">✓</span> OR x402 USDC micropayments</li>
+            <li class="flex items-start gap-2"><span class="text-x402 mt-0.5">✓</span> No monthly commitment</li>
+            <li class="flex items-start gap-2"><span class="text-x402 mt-0.5">✓</span> Usage-based billing</li>
+          </ul>
+          <a href="/dashboard" class="block text-center py-2.5 rounded-lg border border-x402/50 text-x402 text-sm font-medium hover:bg-x402/10 transition">Get Started</a>
         </div>
         <div class="bg-gray-900 rounded-xl border-2 border-sakura/50 p-6 relative">
           <span class="absolute -top-3 left-1/2 -translate-x-1/2 text-xs px-3 py-1 bg-sakura text-white rounded-full font-medium">Popular</span>
