@@ -19,7 +19,7 @@
  *   API_URL=http://localhost:8787 npx tsx scripts/e2e-x402.ts
  *
  * Prerequisites for full E2E:
- *   - Base Sepolia ETH (gas): https://www.alchemy.com/faucets/base-sepolia
+ *   - Base Sepolia ETH (gas): https://www.alchemy.com/faucets/base
  *   - Base Sepolia USDC: https://faucet.circle.com/ → Base Sepolia
  *   - Wallet private key with both ETH + USDC on Base Sepolia
  */
@@ -28,7 +28,7 @@ const API_URL = process.env.API_URL ?? "https://jpseasons.dokos.dev";
 const API_KEY = process.env.API_KEY ?? "sakura-demo-2026";
 const WALLET_KEY = process.env.WALLET_PRIVATE_KEY;
 
-const USDC_BASE_SEPOLIA = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
+const USDC_BASE_SEPOLIA = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 const PAYTO = "0xBC4EA29B8866ec5B26FFA0Ca431966E6eC6E3202";
 
 let passed = 0;
@@ -84,7 +84,7 @@ async function test402Discovery() {
 
   const accept = accepts[0];
   assert(accept.scheme === "exact", `Scheme: ${accept.scheme}`);
-  assert(accept.network === "base-sepolia", `Network: ${accept.network}`);
+  assert(accept.network === "base", `Network: ${accept.network}`);
   assert(accept.asset === USDC_BASE_SEPOLIA, `Asset: USDC on Base Sepolia`);
   assert((accept.payTo as string)?.toLowerCase() === PAYTO.toLowerCase(), `PayTo: ${accept.payTo}`);
   assert(typeof accept.maxAmountRequired === "string", `Amount: ${accept.maxAmountRequired} (${Number(accept.maxAmountRequired) / 1_000_000} USDC)`);
@@ -102,7 +102,7 @@ async function testX402Info() {
   assert(typeof body.facilitator === "string", `Facilitator: ${body.facilitator}`);
 
   const networks = body.supportedNetworks as string[];
-  assert(Array.isArray(networks) && networks.includes("base-sepolia"), `Networks: ${networks}`);
+  assert(Array.isArray(networks) && networks.includes("base"), `Networks: ${networks}`);
 
   const pricing = body.pricing as Record<string, unknown>;
   assert(!!pricing, "Has pricing map");
@@ -180,7 +180,7 @@ async function testX402Payment() {
       log("💡", "Wallet needs USDC on Base Sepolia. Get some at: https://faucet.circle.com/");
     }
     if (msg.includes("gas")) {
-      log("💡", "Wallet needs ETH on Base Sepolia for gas. Get some at: https://www.alchemy.com/faucets/base-sepolia");
+      log("💡", "Wallet needs ETH on Base Sepolia for gas. Get some at: https://www.alchemy.com/faucets/base");
     }
   }
 }

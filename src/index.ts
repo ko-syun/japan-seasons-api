@@ -65,7 +65,7 @@ app.get("/x402/info", (c) => {
   const payTo = c.env.X402_PAYTO_ADDRESS;
   return c.json({
     x402Version: 1,
-    supportedNetworks: ["base-sepolia"],
+    supportedNetworks: ["base"],
     supportedAssets: ["USDC"],
     pricing: getPricingMap(),
     payTo: payTo ?? null,

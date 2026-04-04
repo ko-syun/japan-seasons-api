@@ -20,7 +20,7 @@ describe("x402 middleware", () => {
     const accepts = body.accepts as Array<Record<string, unknown>>;
     expect(accepts).toHaveLength(1);
     expect(accepts[0]).toHaveProperty("scheme", "exact");
-    expect(accepts[0]).toHaveProperty("network", "base-sepolia");
+    expect(accepts[0]).toHaveProperty("network", "base");
     expect(accepts[0]).toHaveProperty("payTo", "0x1234567890abcdef1234567890abcdef12345678");
     expect(accepts[0]).toHaveProperty("maxAmountRequired", "1000"); // forecast = 1000
   });
@@ -82,7 +82,7 @@ describe("x402 middleware", () => {
       payload: {
         payTo: "0xWRONGADDRESS000000000000000000000000000",
         amount: "1000",
-        network: "base-sepolia",
+        network: "base",
       },
       signature: "0xfakesignature",
     };

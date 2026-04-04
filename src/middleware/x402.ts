@@ -20,11 +20,11 @@ const ENDPOINT_PRICES: Record<string, number> = {
   "/v1/matsuri/upcoming": 1000,
 };
 
-// USDC contract on Base Sepolia testnet
-const USDC_BASE_SEPOLIA = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
+// USDC contract on Base mainnet
+const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
-// x402 network identifier for Base Sepolia
-const NETWORK = "base-sepolia";
+// x402 network identifier for Base mainnet
+const NETWORK = "base";
 
 // Default facilitator URL (x402.org public facilitator)
 const FACILITATOR_URL = "https://x402.org/facilitator";
@@ -85,7 +85,7 @@ export async function x402Middleware(
             resource: c.req.url,
             payTo,
             maxTimeoutSeconds: 60,
-            asset: USDC_BASE_SEPOLIA,
+            asset: USDC_BASE,
             extra: {
               name: "Japan Seasons API",
               description: `Access to ${path}`,
@@ -124,7 +124,7 @@ export async function x402Middleware(
       amount: String(requiredAmount),
       payTo,
       maxTimeoutSeconds: 60,
-      asset: USDC_BASE_SEPOLIA,
+      asset: USDC_BASE,
       extra: {
         name: "Japan Seasons API",
         description: `Access to ${path}`,
