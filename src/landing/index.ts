@@ -82,12 +82,17 @@ export const landingHtml = `<!DOCTYPE html>
       <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-8">
         Cherry blossoms, autumn foliage &amp; festivals — one x402-enabled API for AI agents and developers
       </p>
-      <div class="flex flex-col sm:flex-row gap-3 justify-center mb-12">
+      <div class="flex flex-col sm:flex-row gap-3 justify-center mb-8">
         <a href="/dashboard" class="px-6 py-3 bg-sakura text-white font-semibold rounded-lg hover:bg-pink-500 transition shadow-lg shadow-sakura/20">
           Get Free API Key
         </a>
         <a href="#docs" class="px-6 py-3 bg-gray-800 text-gray-200 font-semibold rounded-lg hover:bg-gray-700 transition border border-gray-700">
           View Docs
+        </a>
+      </div>
+      <div class="flex justify-center mb-12">
+        <a href="https://orynth.dev/projects/japan-seasons-api" target="_blank" rel="noopener">
+          <img src="https://orynth.dev/api/badge/japan-seasons-api?theme=dark&style=default" alt="Featured on Orynth" width="260" height="80" class="rounded-lg" />
         </a>
       </div>
       <div class="max-w-2xl mx-auto text-left">
