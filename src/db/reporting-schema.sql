@@ -15,14 +15,14 @@ CREATE TABLE IF NOT EXISTS daily_request_stats (
 CREATE INDEX IF NOT EXISTS idx_daily_stats_date ON daily_request_stats(date);
 CREATE INDEX IF NOT EXISTS idx_daily_stats_date_tier ON daily_request_stats(date, tier);
 
--- x402 payment records
+-- x402 payment records (settled_at is set by application code)
 CREATE TABLE IF NOT EXISTS x402_payments (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   endpoint TEXT NOT NULL,
   amount_base_units INTEGER NOT NULL,  -- USDC base units (6 decimals)
   tx_hash TEXT,
-  network TEXT NOT NULL DEFAULT "base",
-  settled_at TEXT NOT NULL DEFAULT (datetime("now")),
+  network TEXT NOT NULL DEFAULT 'base',
+  settled_at TEXT NOT NULL,
   UNIQUE(tx_hash)
 );
 

@@ -267,13 +267,14 @@ async function insertX402Payment(
   amountBaseUnits: number,
   txHash: string | null
 ): Promise<void> {
+  const now = new Date().toISOString();
   await db
     .prepare(
-      `INSERT INTO x402_payments (endpoint, amount_base_units, tx_hash)
-       VALUES (?, ?, ?)
+      `INSERT INTO x402_payments (endpoint, amount_base_units, tx_hash, settled_at)
+       VALUES (?, ?, ?, ?)
        ON CONFLICT(tx_hash) DO NOTHING`
     )
-    .bind(endpoint, amountBaseUnits, txHash)
+    .bind(endpoint, amountBaseUnits, txHash, now)
     .run();
 }
 

@@ -9,6 +9,7 @@ export interface Env {
   STRIPE_PAYG_PRICE_ID?: string;
   JWT_SECRET?: string;
   X402_PAYTO_ADDRESS?: string;
+  DISCORD_WEBHOOK_URL?: string;
 }
 
 // ── Location Types ──

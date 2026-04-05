@@ -17,6 +17,7 @@ import { kouyouLocationsRoute } from "./routes/kouyou/locations.js";
 import { kouyouRecommendRoute } from "./routes/kouyou/recommend.js";
 import { handleScheduled } from "./cron/ingest.js";
 import { handleBillingCron } from "./cron/billing.js";
+import { handleDailyReportCron } from "./cron/dailyReport.js";
 import { adminRoute } from "./routes/admin.js";
 import { matsuriRoute } from "./routes/matsuri.js";
 import { mcpHandler } from "./mcp/server.js";
@@ -152,8 +153,12 @@ export default {
     if (event.cron === "10 0 1 * *") {
       ctx.waitUntil(handleBillingCron(env));
     }
+    // Daily report cron (09:34 JST = 00:34 UTC)
+    if (event.cron === "34 0 * * *") {
+      ctx.waitUntil(handleDailyReportCron(env));
+    }
     // If cron doesn't match specific patterns, run ingest (backward compat)
-    if (event.cron !== "0 1 * * *" && event.cron !== "10 0 1 * *") {
+    if (event.cron !== "0 1 * * *" && event.cron !== "10 0 1 * *" && event.cron !== "34 0 * * *") {
       await handleScheduled(event, env, ctx);
     }
   },

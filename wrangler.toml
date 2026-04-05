@@ -23,7 +23,7 @@ id = "23670483d21a463e87ba86253b9f26d9"
 
 # Cron Triggers - daily during sakura season
 [triggers]
-crons = ["0 1 * * *", "10 0 1 * *"]
+crons = ["0 1 * * *", "10 0 1 * *", "34 0 * * *"]
 
 # Environment variables
 [vars]
