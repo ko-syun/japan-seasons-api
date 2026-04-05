@@ -4,6 +4,7 @@ import { corsMiddleware } from "./middleware/cors.js";
 import { authMiddleware } from "./middleware/auth.js";
 import { x402Middleware, getPricingMap } from "./middleware/x402.js";
 import { rateLimitMiddleware } from "./middleware/rateLimit.js";
+import { requestLogMiddleware } from "./middleware/requestLog.js";
 import { statusRoute } from "./routes/status.js";
 import { forecastRoute } from "./routes/forecast.js";
 import { historicalRoute } from "./routes/historical.js";
@@ -83,6 +84,7 @@ const v1 = new Hono<{ Bindings: Env }>();
 v1.use("*", x402Middleware as never);
 v1.use("*", authMiddleware as never);
 v1.use("*", rateLimitMiddleware as never);
+v1.use("*", requestLogMiddleware as never);
 
 v1.route("/sakura/status", statusRoute);
 v1.route("/sakura/forecast", forecastRoute);

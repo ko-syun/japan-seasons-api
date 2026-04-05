@@ -2,6 +2,7 @@ import { Context, Next } from "hono";
 import type { Env } from "../types.js";
 import { HTTPFacilitatorClient } from "@x402/core/server";
 import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
+import { safeWaitUntil } from "../utils/waitUntil.js";
 
 // Pricing per endpoint path (in USDC base units, 6 decimals)
 // e.g. 500 = 0.0005 USDC, 1000 = 0.001 USDC
@@ -212,6 +213,13 @@ export async function x402Middleware(
           c.header("X-Payment-Network", settleResult.network ?? NETWORK);
         }
 
+        // Log x402 payment to D1 (fire-and-forget)
+        const txHash = settleResult.transaction ?? null;
+        safeWaitUntil(
+          c as unknown as Context,
+          insertX402Payment(c.env.DB, path, requiredAmount, txHash)
+        );
+
         if (!settleResult.success) {
           // Settlement failed — log but don't fail the response
           // The payment was verified, so the user should still get their data
@@ -251,6 +259,22 @@ export async function x402Middleware(
       400
     );
   }
+}
+
+async function insertX402Payment(
+  db: D1Database,
+  endpoint: string,
+  amountBaseUnits: number,
+  txHash: string | null
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO x402_payments (endpoint, amount_base_units, tx_hash)
+       VALUES (?, ?, ?)
+       ON CONFLICT(tx_hash) DO NOTHING`
+    )
+    .bind(endpoint, amountBaseUnits, txHash)
+    .run();
 }
 
 function getPrice(path: string): number {
