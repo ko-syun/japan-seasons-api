@@ -14,13 +14,13 @@
     "db:seed": "wrangler d1 execute japan-seasons-db --local --file=src/db/seed.sql"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.28.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@x402/hono": "^2.9.0",
     "cheerio": "^1.0.0",
-    "hono": "^4.7.0"
+    "hono": "^4.12.12"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.8.0",
+    "@cloudflare/vitest-pool-workers": "^0.14.2",
     "@cloudflare/workers-types": "^4.20250327.0",
     "@x402/evm": "^2.9.0",
     "@x402/fetch": "^2.9.0",
