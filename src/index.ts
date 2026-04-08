@@ -24,6 +24,7 @@ import { mcpHandler } from "./mcp/server.js";
 import { dashboardRoute } from "./routes/dashboard.js";
 import { dashboardHtml } from "./dashboard/static/index.js";
 import { landingHtml } from "./landing/index.js";
+import { commerceDisclosureHtml } from "./landing/commerce-disclosure.js";
 import {
   robotsTxt,
   sitemapXml,
@@ -61,6 +62,10 @@ app.get("/", (c) => {
 });
 
 app.get("/health", (c) => c.json({ status: "ok" }));
+
+// ── Commerce Disclosure (特定商取引法に基づく表記) ──
+app.get("/legal", (c) => c.html(commerceDisclosureHtml));
+app.get("/commerce-disclosure", (c) => c.html(commerceDisclosureHtml));
 
 // ── x402 Payment Protocol info (no auth required) ──
 app.get("/x402/info", (c) => {

@@ -415,6 +415,7 @@ X-Payment-Address: <span class="text-autumn">0x...</span>
       <div class="flex items-center gap-4">
         <a href="/dashboard" class="hover:text-white transition">Dashboard</a>
         <a href="#docs" class="hover:text-white transition">Docs</a>
+        <a href="/legal" class="hover:text-white transition">Legal</a>
         <span class="text-gray-700">•</span>
         <span>Built with Cloudflare Workers</span>
       </div>
