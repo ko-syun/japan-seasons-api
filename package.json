@@ -20,7 +20,7 @@
     "hono": "^4.12.12"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.14.2",
+    "@cloudflare/vitest-pool-workers": "^0.14.3",
     "@cloudflare/workers-types": "^4.20250327.0",
     "@x402/evm": "^2.9.0",
     "@x402/fetch": "^2.9.0",
